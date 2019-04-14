@@ -1,0 +1,98 @@
+plugins {
+    id 'java'
+
+    id 'com.github.hierynomus.license' version '0.15.0'
+    id 'nebula.info' version '5.0.2'
+    id 'checkstyle'
+    id 'findbugs'
+    id 'pmd'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.26'
+	compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+
+	compile group: 'io.javalin', name: 'javalin', version: '2.8.0'
+}
+
+jar {
+	manifest {
+		attributes(
+			'Built-By': System.properties['user.name'],
+			'Created-By': "${System.properties['java.vm.version']} (${System.properties['java.vm.vendor']})",
+			'Implementation-Name': project.name,
+			'Implementation-Version': project.version,
+			'Implementation-Vendor': project.url
+		)
+	}
+}
+
+/* ======================================== Buildscript Configuration ======================================== */
+
+sourceCompatibility = targetCompatibility = '1.8'
+
+configure([compileJava, compileTestJava]) {
+	options.compilerArgs += ['-Xlint:all', '-Xlint:-path']
+	options.deprecation = true
+	options.encoding = 'UTF-8'
+}
+
+task sourceJar(type: Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+artifacts {
+	archives sourceJar, jar
+}
+
+license {
+	ext {
+		name = project.name
+		organization = project.organization
+		url = project.url
+		year = Calendar.getInstance().get(Calendar.YEAR)
+	}
+
+	header project.file('config/HEADER.txt')
+	include '**/*.java'
+
+	ignoreFailures false
+	strictCheck true
+
+	mapping {
+		java = 'SLASHSTAR_STYLE'
+	}
+}
+
+processResources {
+	from 'LICENSE.txt'
+}
+
+checkstyle {
+    toolVersion = '8.18'
+	configDir = project.file('config/')
+	configProperties = [
+		'basedir': project.projectDir,
+		'suppressions': project.file('config/checkstyle-suppressions.xml')
+	]
+}
+
+findbugs {
+    toolVersion = '3.0.1'
+	ignoreFailures = true
+	sourceSets = [sourceSets.main]
+	reportsDir = file("$project.buildDir/reports/findbugs")
+	effort = 'max'
+}
+
+pmd {
+	ignoreFailures = true
+	sourceSets = [sourceSets.main]
+	reportsDir = file("$project.buildDir/reports/pmd")
+	ruleSets = ['java-basic', 'java-braces']
+}
