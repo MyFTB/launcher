@@ -16,4 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-rootProject.name = name
+package de.myftb.launcher.logging;
+
+import java.io.File;
+
+import ch.qos.logback.core.rolling.TriggeringPolicyBase;
+
+public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
+    private static boolean rolled = false;
+
+    @Override
+    public boolean isTriggeringEvent(File activeFile, T event) {
+        if (!StartupRollTriggeringPolicy.rolled) {
+            StartupRollTriggeringPolicy.rolled = true;
+            if (activeFile.length() == 0) {
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+}

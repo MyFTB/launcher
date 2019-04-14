@@ -1,0 +1,85 @@
+/*
+ * MyFTBLauncher
+ * Copyright (C) 2019 MyFTB <https://myftb.de>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package de.myftb.launcher.gui;
+
+import de.myftb.launcher.Launcher;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+
+import org.cef.CefApp;
+import org.cef.CefSettings;
+import org.cef.browser.CefBrowser;
+import org.cef.handler.CefLifeSpanHandlerAdapter;
+
+public class CefFrame extends JFrame {
+    private static int browserCount = 0;
+
+    public CefFrame(CefBrowser browser) {
+        this.getContentPane().add(browser.getUIComponent());
+
+        try {
+            this.setIconImage(ImageIO.read(Launcher.class.getResourceAsStream("/icon.png")));
+        } catch (IOException e) { }
+
+        browser.getClient().addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
+            @Override
+            public void onAfterCreated(CefBrowser cefBrowser) {
+                CefFrame.browserCount++;
+            }
+
+            @Override
+            public void onBeforeClose(CefBrowser cefBrowser) {
+                if (--CefFrame.browserCount == 0) {
+                    if (DevToolsDialog.devTools != null) {
+                        DevToolsDialog.devTools.dispose();
+                    }
+
+                    CefApp.getInstance().dispose();
+                }
+            }
+        });
+    }
+
+    public static CefApp getApp() {
+        AtomicReference<CefApp> cefAppRef = new AtomicReference<>(null);
+
+        try {
+            SwingUtilities.invokeAndWait(() -> {
+                if (!CefApp.startup()) {
+                    return;
+                }
+
+                CefSettings settings = new CefSettings();
+                settings.user_agent = "MyFTB Launcher";
+                settings.windowless_rendering_enabled = false;
+                cefAppRef.set(CefApp.getInstance(settings));
+            });
+        } catch (InterruptedException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+
+        return cefAppRef.get();
+    }
+
+}
