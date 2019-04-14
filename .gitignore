@@ -1,5 +1,7 @@
+node_modules/
 .gradle/
 .idea/
 build/
 out/
 run/
+src/main/resources/webroot/app.js
