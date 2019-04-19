@@ -1,0 +1,168 @@
+/*
+ * MyFTBLauncher
+ * Copyright (C) 2019 MyFTB <https://myftb.de>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+@import 'spinner.scss';
+@import 'login.scss';
+@import 'defaultstyles.scss';
+@import 'form.scss';
+@import 'packs.scss';
+@import 'progressbar.scss';
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+$iconSize: 48px;
+$sidebarWidth: $iconSize + 180px;
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: $sidebarWidth;
+    max-width: $iconSize;
+    background: #333;
+    transition: max-width .3s;
+    overflow: hidden;
+    z-index: 100;
+
+    &:hover {
+        max-width: $sidebarWidth;
+    }
+
+    > ul {
+        > li {
+            width: $sidebarWidth;
+            margin-top: 20px;
+
+            &.profile {
+                color: #eee;
+                text-decoration: none;
+                font-weight: 1000;
+                display: flex;
+                align-items: center;
+                position: absolute;
+                bottom: 8px;
+                > img {
+                    width: 48px;
+                    padding: 8px;
+                    box-sizing: border-box;
+                }
+            }
+        }
+
+        a {
+            display: flex;
+            align-items: center;
+
+            &.active {
+                color: #83da38;
+            }
+        }
+    }
+
+    .svg-inline--fa {
+        font-size: $iconSize / 2;
+        width: $iconSize;
+    }
+}
+
+.content {
+    margin-left: $iconSize;
+    color: #eee;
+    padding: 30px;
+}
+
+.overlayed-dark {
+    z-index: 200;
+    position: fixed;
+    left: 0;
+    right: 0; 
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings {
+    margin: 0 100px;
+}
+
+.main-page {
+    ul {
+        display: inline;
+        > li {
+            display: inline-block;
+
+            &:not(:first-child) {
+                margin-left: 5px;
+            }
+
+            &:not(:last-child) {
+                
+                &:after {
+                    content: ' | ';
+                }
+            }
+        }
+    }
+}
+
+.dialog {
+    animation-name: fade-in;
+    animation-duration: .5s;
+
+    width: 400px;
+    border-radius: 6px;
+    background-color: #333;
+    color: #eee;
+    padding: 20px;
+
+    .btn {
+        box-sizing: border-box;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background-color: #222;
+        outline: none;
+        color: #eee;
+        transition: all .1s;
+        margin-top: 10px;
+        cursor: pointer;
+
+        &:disabled {
+            cursor: not-allowed;
+        }
+
+        &:hover:not([disabled]) {
+            color: #83da38;
+            background-color: #252525;
+        }
+    }
+}

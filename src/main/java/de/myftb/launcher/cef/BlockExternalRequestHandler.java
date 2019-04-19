@@ -18,7 +18,9 @@
 
 package de.myftb.launcher.cef;
 
-import java.net.URL;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -29,19 +31,22 @@ import org.slf4j.LoggerFactory;
 
 public class BlockExternalRequestHandler extends CefRequestHandlerAdapter {
     private static final Logger log = LoggerFactory.getLogger(BlockExternalRequestHandler.class);
+    private static final List<String> allowedSchemes = Arrays.asList("playerhead", "chrome-devtools");
 
     private boolean checkRequest(CefRequest request) {
         try {
-            URL url = new URL(request.getURL());
-            if (!"127.0.0.1".equals(url.getHost())) {
+            URI uri = new URI(request.getURL());
+            if (BlockExternalRequestHandler.allowedSchemes.contains(uri.getScheme())) {
+                return false;
+            }
+
+            if (!"127.0.0.1".equals(uri.getHost()) && !"localhost".equals(uri.getHost())) { //NOPMD
                 BlockExternalRequestHandler.log.info("Externe URL blockiert: " + request.getURL());
                 return true;
             }
         } catch (Exception e) {
-            if (!request.getURL().startsWith("chrome-devtools://")) {
-                BlockExternalRequestHandler.log.info("Externe URL blockiert: " + request.getURL(), e);
-                return true;
-            }
+            BlockExternalRequestHandler.log.info("Externe URL blockiert: " + request.getURL(), e);
+            return true;
         }
 
         return false;

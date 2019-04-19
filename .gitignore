@@ -4,4 +4,4 @@ node_modules/
 build/
 out/
 run/
-src/main/resources/webroot/app.js
+src/main/resources/webroot/

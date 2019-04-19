@@ -16,27 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.logging;
-
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
+package de.myftb.launcher.launch;
 
 import java.io.File;
+import java.nio.file.Files;
 
-public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
-    private static boolean rolled = false;
+public class CopyDownloadCallable extends DownloadCallable {
+    private final File copy;
+
+    public CopyDownloadCallable(Downloadable downloadable, File copy) {
+        super(downloadable);
+        this.copy = copy;
+    }
 
     @Override
-    public boolean isTriggeringEvent(File activeFile, T event) {
-        if (!StartupRollTriggeringPolicy.rolled) {
-            StartupRollTriggeringPolicy.rolled = true;
-            if (activeFile.length() == 0) {
-                return false;
-            }
+    public File call() throws Exception {
+        File targetFile = super.call();
 
-            return true;
-        }
+        Files.copy(targetFile.toPath(), this.copy.toPath());
+        Files.write(new File(this.copy.getAbsolutePath() + ".sha1").toPath(),
+                this.downloadable.sha1.getBytes());
 
-        return false;
+        return targetFile;
     }
 
 }

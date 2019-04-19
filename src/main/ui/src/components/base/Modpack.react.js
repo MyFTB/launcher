@@ -16,27 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.logging;
+import React from 'react';
 
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
+import placeholder from '../../img/pack_placeholder.png';
 
-import java.io.File;
+export default class Modpack extends React.Component {
 
-public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
-    private static boolean rolled = false;
+    getLastUpdate() {
+        return this.props.pack.version.split('_').reverse()
+            .map((v, i) => i == 0
+                ? v.split('-').slice(0, 2).join(':')
+                : v.split('-').reverse().join('.'))
+            .join(' ');
+    }
 
-    @Override
-    public boolean isTriggeringEvent(File activeFile, T event) {
-        if (!StartupRollTriggeringPolicy.rolled) {
-            StartupRollTriggeringPolicy.rolled = true;
-            if (activeFile.length() == 0) {
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
+    render() {
+        return (
+            <div className="pack" {...this.props}>
+                <img src={placeholder}></img>
+                <div className="blackout"></div>
+                <p><b>{this.props.pack.title}</b></p>
+            </div>
+        )
     }
 
 }

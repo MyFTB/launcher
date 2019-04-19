@@ -1,0 +1,33 @@
+{
+    "fileHeaderComment.parameter":{
+		"*":{
+			"commentbegin": "/*",
+			"commentprefix": " *",
+            "commentend": " */",
+            "name": "MyFTBLauncher",
+            "organization": "MyFTB",
+            "url": "https://myftb.de"
+		}
+	},
+	"fileHeaderComment.template":{
+		"*":[
+			"${commentbegin}",
+            "${commentprefix} ${name}",
+            "${commentprefix} Copyright (C) ${year} ${organization} <${url}>",
+            "${commentprefix}",
+            "${commentprefix} This program is free software: you can redistribute it and/or modify",
+            "${commentprefix} it under the terms of the GNU General Public License as published by",
+            "${commentprefix} the Free Software Foundation, either version 3 of the License, or",
+            "${commentprefix} (at your option) any later version.",
+            "${commentprefix}",
+            "${commentprefix} This program is distributed in the hope that it will be useful,",
+            "${commentprefix} but WITHOUT ANY WARRANTY; without even the implied warranty of",
+            "${commentprefix} MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the",
+            "${commentprefix} GNU General Public License for more details.",
+            "${commentprefix}",
+            "${commentprefix} You should have received a copy of the GNU General Public License",
+            "${commentprefix} along with this program.  If not, see <http://www.gnu.org/licenses/>.",
+			"${commentend}"
+		]
+	}
+}

@@ -16,27 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.logging;
-
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
-
-import java.io.File;
-
-public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
-    private static boolean rolled = false;
-
-    @Override
-    public boolean isTriggeringEvent(File activeFile, T event) {
-        if (!StartupRollTriggeringPolicy.rolled) {
-            StartupRollTriggeringPolicy.rolled = true;
-            if (activeFile.length() == 0) {
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
+.login-form {
+    .error-alert {
+        margin-bottom: 20px;
+        background-color: #800000;
+        padding: 10px;
+        border-radius: 6px;
     }
 
+    .form-group {
+        margin-bottom: 10px;
+
+        .login-btn {
+            float: right;
+        }
+
+        &:first-child {
+            margin-bottom: 20px;
+        }
+    }
 }

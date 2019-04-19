@@ -26,9 +26,10 @@ import javax.swing.JDialog;
 import org.cef.browser.CefBrowser;
 
 public class DevToolsDialog extends JDialog {
-    public static DevToolsDialog devTools;
+    public static final long serialVersionUID = 7271475725186540702L;
+    static DevToolsDialog devTools;
     private final CefBrowser browser;
-    
+
     public DevToolsDialog(CefBrowser cefBrowser) {
         super((Dialog) null, "MyFTB Launcher - DevTools", false);
         if (DevToolsDialog.devTools != null) {

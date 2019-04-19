@@ -16,27 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.logging;
+package de.myftb.launcher.models.modpacks;
 
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import java.io.File;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Feature {
+    private String name;
+    private String description;
+    private boolean selected;
 
-public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
-    private static boolean rolled = false;
+    public String getName() {
+        return this.name;
+    }
 
-    @Override
-    public boolean isTriggeringEvent(File activeFile, T event) {
-        if (!StartupRollTriggeringPolicy.rolled) {
-            StartupRollTriggeringPolicy.rolled = true;
-            if (activeFile.length() == 0) {
-                return false;
-            }
+    public String getDescription() {
+        return this.description;
+    }
 
-            return true;
-        }
-
-        return false;
+    public boolean isSelected() {
+        return this.selected;
     }
 
 }

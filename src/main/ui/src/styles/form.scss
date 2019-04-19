@@ -1,0 +1,173 @@
+/*
+ * MyFTBLauncher
+ * Copyright (C) 2019 MyFTB <https://myftb.de>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.form-group {
+    width: 100%;
+
+    &:not(:last-child) {
+        margin-bottom: 18px;
+    }
+    
+    p {
+        margin: 0 0 6px 0;
+        display: inline-block;
+        & + .switch {
+            float: right;
+        }
+    }
+
+    input {
+        box-sizing: border-box;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        background-color: #222;
+        outline: none;
+        color: #eee;
+        width: 100%;
+        font-size: 12px;
+    }
+
+    input[type=range] {
+        -webkit-appearance: none;
+        border-radius: 5px;   
+        background: #eee;
+        outline: none;
+        padding: 0;
+        height: 6px;
+
+        &::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%; 
+            background: #83da38;
+            cursor: pointer;
+            content: 'Hello World';
+        }
+    }
+}
+
+.range {
+    position: relative;
+
+    > span {
+        position: absolute;
+        top: 32px;
+        padding: 2px 6px;
+        background: #eee;
+        color: #111111;
+        border-radius: 6px;
+        display: none;
+        width: 60px;
+        text-align: center;
+
+        &:before {
+            display: block;
+            content: ' ';
+            width: 12px;
+            height: 12px;
+            position: absolute;
+            top: -6px;
+            transform: translateX(-50%) rotate(45deg);
+            left: 50%;
+            background: #eee;
+            z-index: -1;
+        }
+    }
+
+    input[type=range]:active + span {
+        display: inline-block;
+    }
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 26px;
+    > input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        &:checked + .slider {
+            background-color: #83da38;
+        }
+        &:focus + .slider {
+            box-shadow: 0 0 1px #83da38;
+        }
+        &:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    }
+    > .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        &:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+        &.round {
+            border-radius: 34px;
+            &:before {
+                border-radius: 50%;
+            }
+        }
+    }
+}
+
+.dir-chooser {
+    width: calc(100% - 50px) !important;
+    border-radius: 0 !important;
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+
+    & + button {
+        box-sizing: border-box;
+        padding: 10px;
+        border: none;
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+        background-color: #222;
+        outline: none;
+        color: #eee;
+        width: 50px;
+        font-size: 12px;
+        border-left: 1px solid #333;
+        transition: all .1s;
+        cursor: pointer;
+
+        &:hover {
+            color: #83da38;
+            background-color: #252525;
+        }
+    }
+}

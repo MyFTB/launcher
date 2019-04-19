@@ -19,6 +19,7 @@
 package de.myftb.launcher.gui;
 
 import de.myftb.launcher.Launcher;
+import de.myftb.launcher.cef.LauncherCefAppHandler;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -31,8 +32,12 @@ import org.cef.CefApp;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefLifeSpanHandlerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CefFrame extends JFrame {
+    private static final Logger log = LoggerFactory.getLogger(CefFrame.class);
+    public static final long serialVersionUID = -8523171301600433735L;
     private static int browserCount = 0;
 
     public CefFrame(CefBrowser browser) {
@@ -40,7 +45,9 @@ public class CefFrame extends JFrame {
 
         try {
             this.setIconImage(ImageIO.read(Launcher.class.getResourceAsStream("/icon.png")));
-        } catch (IOException e) { }
+        } catch (IOException e) {
+            CefFrame.log.warn("Fehler beim Setzen des Fenstericons", e);
+        }
 
         browser.getClient().addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
             @Override
@@ -74,6 +81,7 @@ public class CefFrame extends JFrame {
                 settings.user_agent = "MyFTB Launcher";
                 settings.windowless_rendering_enabled = false;
                 cefAppRef.set(CefApp.getInstance(settings));
+                CefApp.addAppHandler(new LauncherCefAppHandler());
             });
         } catch (InterruptedException | InvocationTargetException e) {
             throw new RuntimeException(e);

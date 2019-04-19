@@ -16,27 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.logging;
+import React from 'react';
 
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
+export default class Loading extends React.Component {
 
-import java.io.File;
+    constructor(props) {
+        super(props);
+    }
 
-public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
-    private static boolean rolled = false;
+    componentDidMount() {
+    
+    }
 
-    @Override
-    public boolean isTriggeringEvent(File activeFile, T event) {
-        if (!StartupRollTriggeringPolicy.rolled) {
-            StartupRollTriggeringPolicy.rolled = true;
-            if (activeFile.length() == 0) {
-                return false;
-            }
+    componentWillUnmount() {
 
-            return true;
-        }
+    }
 
-        return false;
+    render() {
+        return (
+            <div className="overlayed-dark">
+                <div className="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+            </div>
+        )
     }
 
 }

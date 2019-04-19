@@ -16,27 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.logging;
+import React from 'react';
 
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
+export default class ExternalLink extends React.Component {
 
-import java.io.File;
+    constructor(props) {
+        super(props);
+        this.onClickHandler = this.onClickHandler.bind(this);
+    }
 
-public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
-    private static boolean rolled = false;
+    onClickHandler() {
+        console.log('CLICK');
+        window.launcher.sendIpc('open_url', {url: this.refs.link.getAttribute('data-link')});
+    }
 
-    @Override
-    public boolean isTriggeringEvent(File activeFile, T event) {
-        if (!StartupRollTriggeringPolicy.rolled) {
-            StartupRollTriggeringPolicy.rolled = true;
-            if (activeFile.length() == 0) {
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
+    render() {
+        return (
+            <a ref="link" href="#" {...this.props} onClick={this.onClickHandler}></a>
+        )
     }
 
 }

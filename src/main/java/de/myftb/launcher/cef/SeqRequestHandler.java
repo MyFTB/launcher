@@ -91,14 +91,16 @@ public class SeqRequestHandler implements CefRequestHandler {
     }
 
     @Override
-    public void onResourceLoadComplete(CefBrowser cefBrowser, CefFrame cefFrame, CefRequest cefRequest, CefResponse cefResponse, CefURLRequest.Status status, long l) {
+    public void onResourceLoadComplete(CefBrowser cefBrowser, CefFrame cefFrame, CefRequest cefRequest, CefResponse cefResponse,
+                                       CefURLRequest.Status status, long l) {
         for (CefRequestHandler handler : this.chain) {
             handler.onResourceLoadComplete(cefBrowser, cefFrame, cefRequest, cefResponse, status, l);
         }
     }
 
     @Override
-    public boolean getAuthCredentials(CefBrowser cefBrowser, CefFrame cefFrame, boolean b, String s, int i, String s1, String s2, CefAuthCallback cefAuthCallback) {
+    public boolean getAuthCredentials(CefBrowser cefBrowser, CefFrame cefFrame, boolean b, String s, int i, String s1, String s2,
+                                      CefAuthCallback cefAuthCallback) {
         for (CefRequestHandler handler : this.chain) {
             if (handler.getAuthCredentials(cefBrowser, cefFrame, b, s, i, s1, s2, cefAuthCallback)) {
                 return true;

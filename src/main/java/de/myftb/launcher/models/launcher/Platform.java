@@ -16,27 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.logging;
+package de.myftb.launcher.models.launcher;
 
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
+public enum Platform {
+    WINDOWS,
+    OSX,
+    LINUX,
+    UNKNOWN;
 
-import java.io.File;
+    public static Platform getPlatform() {
+        String osName = System.getProperty("os.name").toLowerCase();
 
-public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
-    private static boolean rolled = false;
-
-    @Override
-    public boolean isTriggeringEvent(File activeFile, T event) {
-        if (!StartupRollTriggeringPolicy.rolled) {
-            StartupRollTriggeringPolicy.rolled = true;
-            if (activeFile.length() == 0) {
-                return false;
-            }
-
-            return true;
+        if (osName.contains("win")) {
+            return Platform.WINDOWS;
+        }
+        if (osName.contains("mac")) {
+            return Platform.OSX;
+        }
+        if (osName.contains("linux")) {
+            return Platform.LINUX;
         }
 
-        return false;
+        return UNKNOWN;
     }
 
 }
