@@ -1,11 +1,11 @@
 plugins {
-    id 'java'
+	id 'java'
 
-    id 'com.github.hierynomus.license' version '0.15.0'
-    id 'nebula.info' version '5.0.3'
-    id 'checkstyle'
-    id 'findbugs'
-    id 'pmd'
+	id 'com.github.hierynomus.license' version '0.15.0'
+	id 'nebula.info' version '5.0.3'
+	id 'checkstyle'
+	id 'findbugs'
+	id 'pmd'
 
 	id 'com.github.ben-manes.versions' version '0.21.0'
 }
@@ -26,17 +26,18 @@ dependencies {
 	compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
 	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.5.8'
 
-	compile files('C:\\Users\\Dogboy\\Desktop\\win64\\bin\\jcef.jar')
+	compile files('run/jcef/jcef.jar')
 }
 
 jar {
 	manifest {
 		attributes(
-			'Built-By': System.properties['user.name'],
-			'Created-By': "${System.properties['java.vm.version']} (${System.properties['java.vm.vendor']})",
-			'Implementation-Name': project.name,
-			'Implementation-Version': project.version,
-			'Implementation-Vendor': project.url
+				'Built-By': System.properties['user.name'],
+				'Created-By': "${System.properties['java.vm.version']} (${System.properties['java.vm.vendor']})",
+				'Implementation-Name': project.name,
+				'Implementation-Version': project.version,
+				'Implementation-Vendor': project.url,
+				'Class-Path': 'jcef/jcef.jar'
 		)
 	}
 }
@@ -84,16 +85,16 @@ processResources {
 }
 
 checkstyle {
-    toolVersion = '8.18'
+	toolVersion = '8.18'
 	configDir = project.file('config/')
 	configProperties = [
-		'basedir': project.projectDir,
-		'suppressions': project.file('config/checkstyle-suppressions.xml')
+			'basedir': project.projectDir,
+			'suppressions': project.file('config/checkstyle-suppressions.xml')
 	]
 }
 
 findbugs {
-    toolVersion = '3.0.1'
+	toolVersion = '3.0.1'
 	ignoreFailures = true
 	sourceSets = [sourceSets.main]
 	reportsDir = file("$project.buildDir/reports/findbugs")
