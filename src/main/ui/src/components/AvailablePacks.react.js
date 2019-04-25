@@ -25,10 +25,16 @@ export default class AvailablePacks extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = { packages: false, dialog: false, status: false, features: false, changeToInstalled: false, featuresFor: false };
+        this.acceptDialog = this.acceptDialog.bind(this);
+        this.closeDialog = this.closeDialog.bind(this);
+        this.state = { 
+            packages: false, dialog: false, status: false, 
+            features: false, featuresFor: false, 
+            changeToInstalled: false 
+        };
     }
 
-    resetDialog() {
+    acceptDialog() {
         if (this.state.features) {
             let features = [];
             let featureChecks = document.querySelectorAll('.feature-dialog input[type=checkbox]');
@@ -40,8 +46,13 @@ export default class AvailablePacks extends React.Component {
             this.installPack(this.state.featuresFor, features);
             this.setState({features: false, featuresFor: false});
         } else if (this.state.changeToInstalled) {
+            window.launcher.resetDialog();
             this.props.history.push('/modpacks');
         }
+    }
+
+    closeDialog() {
+        this.setState({features: false, featuresFor: false});
     }
 
     componentDidMount() {
@@ -79,7 +90,10 @@ export default class AvailablePacks extends React.Component {
                 this.setState({ status: { progress: data.installing, pack: this.state.packages[index] } });
             } else if (data.installed) {
                 this.setState({ status: false, changeToInstalled: true });
-                window.launcher.showDialog(true, <p>Das Modpack {this.state.packages[index].title} wurde erfolgreich installiert</p>);
+                window.launcher.showDialog(false, [
+                    <p>Das Modpack {this.state.packages[index].title} wurde erfolgreich installiert</p>,
+                    <button className="btn" onClick={this.acceptDialog}>OK</button>
+                ]);
             }
         });
     }
@@ -124,7 +138,8 @@ export default class AvailablePacks extends React.Component {
                                     </div>
                                 )
                             })}
-                            <button className="btn" onClick={this.resetDialog}>OK</button>
+                            <button className="btn" onClick={this.acceptDialog}>OK</button>
+                            <button className="btn" onClick={this.closeDialog}>Abbrechen</button>
                         </div>
                     </div>
                 )}

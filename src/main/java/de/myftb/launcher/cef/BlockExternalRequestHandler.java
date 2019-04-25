@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 public class BlockExternalRequestHandler extends CefRequestHandlerAdapter {
     private static final Logger log = LoggerFactory.getLogger(BlockExternalRequestHandler.class);
-    private static final List<String> allowedSchemes = Arrays.asList("playerhead", "chrome-devtools");
+    private static final List<String> allowedSchemes = Arrays.asList("playerhead", "chrome-devtools", "modpackimage");
 
     private boolean checkRequest(CefRequest request) {
         try {

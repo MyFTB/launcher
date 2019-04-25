@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.gui;
+package de.myftb.launcher.cef.gui;
 
 import java.awt.Dialog;
 import java.awt.event.ComponentAdapter;

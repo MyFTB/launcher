@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.gui;
+package de.myftb.launcher.cef.gui;
 
 import de.myftb.launcher.Launcher;
 import de.myftb.launcher.cef.LauncherCefAppHandler;

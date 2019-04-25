@@ -18,11 +18,13 @@
 
 package de.myftb.launcher.cef;
 
+import de.myftb.launcher.cef.schemes.ModpackImageScheme;
 import de.myftb.launcher.cef.schemes.PlayerHeadScheme;
 
 import org.cef.CefApp;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
+import org.cef.callback.CefCommandLine;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
@@ -44,7 +46,15 @@ public class LauncherCefAppHandler extends CefAppHandlerAdapter {
     @Override
     public void onContextInitialized() {
         CefApp cefApp = CefApp.getInstance();
-        cefApp.registerSchemeHandlerFactory("playerhead", "", new SchemeHandlerFactory());
+        SchemeHandlerFactory factory = new SchemeHandlerFactory();
+        cefApp.registerSchemeHandlerFactory("playerhead", "", factory);
+        cefApp.registerSchemeHandlerFactory("modpackimage", "", factory);
+    }
+
+    @Override
+    public void onBeforeCommandLineProcessing(String s, CefCommandLine cefCommandLine) {
+        cefCommandLine.appendSwitchWithValue("enable-features", "OverlayScrollbar");
+        cefCommandLine.appendArgument("enable-smooth-scrolling");
     }
 
     private static class SchemeHandlerFactory implements CefSchemeHandlerFactory {
@@ -52,6 +62,8 @@ public class LauncherCefAppHandler extends CefAppHandlerAdapter {
         public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
             if ("playerhead".equals(schemeName)) {
                 return new PlayerHeadScheme();
+            } else if ("modpackimage".equals(schemeName)) {
+                return new ModpackImageScheme();
             }
 
             return null;

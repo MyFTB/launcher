@@ -65,8 +65,8 @@ public class MavenDownloadCallable extends DownloadCallable {
 
     private File tryRepository(String repository, String path) throws IOException {
         HttpResponse sha1SumResponse = Request.Get(repository + path + ".sha1")
-                .connectTimeout(3000)
-                .socketTimeout(3000)
+                .connectTimeout(Constants.connectTimeout)
+                .socketTimeout(Constants.socketTimeout)
                 .execute()
                 .returnResponse();
 
@@ -86,8 +86,8 @@ public class MavenDownloadCallable extends DownloadCallable {
         this.downloadable.targetFile.getParentFile().mkdirs();
 
         Request.Get(repository + path)
-                .socketTimeout(3000)
-                .connectTimeout(3000)
+                .connectTimeout(Constants.connectTimeout)
+                .socketTimeout(Constants.socketTimeout)
                 .execute()
                 .saveContent(this.downloadable.targetFile);
 

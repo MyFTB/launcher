@@ -23,11 +23,15 @@ import com.mojang.authlib.exceptions.AuthenticationException;
 
 import de.myftb.launcher.cef.AuthRequestHandler;
 import de.myftb.launcher.cef.BlockExternalRequestHandler;
-import de.myftb.launcher.cef.DevToolsContextMenuHandler;
+import de.myftb.launcher.cef.LauncherContextMenuHandler;
 import de.myftb.launcher.cef.SeqRequestHandler;
+import de.myftb.launcher.cef.gui.CefFrame;
 import de.myftb.launcher.cef.ipc.TopicMessageHandler;
-import de.myftb.launcher.gui.CefFrame;
+import de.myftb.launcher.launch.LaunchMinecraft;
+import de.myftb.launcher.launch.ManifestHelper;
 import de.myftb.launcher.models.launcher.LauncherConfig;
+import de.myftb.launcher.models.modpacks.ModpackManifest;
+import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
 import io.javalin.Javalin;
 import io.javalin.UnauthorizedResponse;
@@ -36,6 +40,7 @@ import io.javalin.core.util.JettyServerUtil;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.UUID;
 import javax.swing.JFrame;
 
@@ -65,6 +70,7 @@ public class Launcher {
     private final IpcTopics ipcTopics;
 
     private LauncherConfig config;
+    private ModpackManifestList modpackList;
 
     public Launcher() {
         String uuid = UUID.randomUUID().toString();
@@ -95,8 +101,6 @@ public class Launcher {
 
         try {
             this.config = new LauncherConfig();
-
-
             this.config = this.config.readConfig(this.getExecutableDirectory()); // Workaround damit Profile korrekt gelesen werden.
             this.config = this.config.readConfig(this.getExecutableDirectory()); // Zukünftig vielleicht einen Custom (De)Serializer?
             this.saveConfig();
@@ -109,7 +113,7 @@ public class Launcher {
 
             CefClient client = this.cefApp.createClient();
             client.addRequestHandler(new SeqRequestHandler(new BlockExternalRequestHandler(), new AuthRequestHandler(uuid)));
-            client.addContextMenuHandler(new DevToolsContextMenuHandler());
+            client.addContextMenuHandler(new LauncherContextMenuHandler(Launcher.development));
 
             CefMessageRouter.CefMessageRouterConfig routerConfig = new CefMessageRouter.CefMessageRouterConfig();
             routerConfig.jsQueryFunction = "ipcQuery";
@@ -148,6 +152,7 @@ public class Launcher {
         this.ipcHandler.listenAsync("request_installed_modpacks", this.ipcTopics::onRequestInstalledModpacks);
         this.ipcHandler.listenAsync("install_modpack", this.ipcTopics::onInstallModpack);
         this.ipcHandler.listenAsync("launch_modpack", this.ipcTopics::onLaunchModpack);
+        this.ipcHandler.listenAsync("modpack_menu_click", this.ipcTopics::onModpackContextMenuClick);
     }
 
     /**
@@ -242,12 +247,50 @@ public class Launcher {
         return subDir;
     }
 
+    public void launchModpack(ModpackManifest manifest, Runnable launchingCallback) throws IOException, InterruptedException {
+        if (this.config.getProfile() == null) {
+            this.ipcHandler.send("show_login_form", new JsonObject());
+            return;
+        }
+
+        boolean loggedIn = false;
+        if (this.config.getProfile().isLoggedIn() || this.config.getProfile().canLogIn()) {
+            try {
+                this.login();
+                loggedIn = true;
+            } catch (AuthenticationException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (!loggedIn) {
+            JsonObject jsonObject = new JsonObject();
+            Map<String, Object> profileData = this.config.getProfile().saveForStorage();
+            if (profileData.containsKey("username")) {
+                jsonObject.addProperty("username", (String) profileData.get("username"));
+            }
+            this.ipcHandler.send("show_login_form", jsonObject);
+            return;
+        }
+
+        launchingCallback.run();
+        LaunchMinecraft.launch(manifest, this.config.getProfile());
+    }
+
     public LauncherConfig getConfig() {
         return this.config;
     }
 
+    public ModpackManifestList getRemotePacks() throws IOException {
+        if (this.modpackList == null) {
+            this.modpackList = ManifestHelper.getManifests();
+        }
+
+        return this.modpackList;
+    }
+
     public String getVersion() {
-        return "@VERSION@"; //TODO
+        return "@version@";
     }
 
     public static void main(String[] args) {

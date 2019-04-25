@@ -59,7 +59,7 @@ export default class Sidebar extends React.Component {
                     <li><NavLink to="/settings" activeClassName="active"><FontAwesomeIcon icon="cogs"/> Einstellungen</NavLink></li>
                     
                     {this.state.profile && (
-                        <li className="profile"><img src={"playerhead://" + this.state.profile.id}></img> Angemeldet als: {this.state.profile.name}</li>
+                        <li className="profile"><img src={"playerhead://launcher/" + this.state.profile.id}></img> Angemeldet als: {this.state.profile.name}</li>
                     )}
                 </ul>
             </div>

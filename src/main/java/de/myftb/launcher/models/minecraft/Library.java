@@ -75,7 +75,7 @@ public class Library {
                     DownloadInfo classifierDownload = this.downloads.classifiers.get(classifier);
                     downloadables.add(new DownloadCallable.Downloadable(classifierDownload.url,
                             classifierDownload.sha1,
-                            new File(Launcher.getInstance().getSaveSubDirectory("natives"),
+                            new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
                                     classifierDownload.path)));
                 }
             }

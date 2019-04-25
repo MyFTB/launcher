@@ -69,8 +69,7 @@ public class LaunchMinecraft {
 
     public static void install(ModpackManifest modpackManifest, List<String> selectedFeatures, InstallationStatusListener statusListener)
             throws IOException {
-        File instanceDir = new File(Launcher.getInstance().getSaveSubDirectory("instances"), modpackManifest.getName());
-        instanceDir.mkdirs();
+        File instanceDir = modpackManifest.getInstanceDir();
         File manifestFile = new File(instanceDir, "manifest.json");
         ModpackManifest oldManifest = null;
         if (manifestFile.isFile()) {
@@ -107,7 +106,7 @@ public class LaunchMinecraft {
         String assetIndexStr = LaunchHelper.download(minecraftManifest.getAssetIndex().getUrl(), minecraftManifest.getAssetIndex().getSha1());
         AssetIndex assetIndex = LaunchHelper.mapper.readValue(assetIndexStr, AssetIndex.class);
         Files.write(new File(Launcher.getInstance().getSaveSubDirectory("assets/indexes"),
-                        minecraftManifest.getAssetIndex().getId() + ".json").toPath(), assetIndexStr.getBytes(StandardCharsets.UTF_8));
+                minecraftManifest.getAssetIndex().getId() + ".json").toPath(), assetIndexStr.getBytes(StandardCharsets.UTF_8));
 
         // Assets
 
@@ -129,23 +128,24 @@ public class LaunchMinecraft {
 
         // Modpack Installation Tasks
 
-        List<FileTask> currentTasks = modpackManifest.getTasks().stream() //TODO Handle Userfiles
-                .filter(task -> task.getCondition() == null || task.getCondition().matches(selectedFeatures))
-                .collect(Collectors.toList());
+        if (modpackManifest.getTasks() != null) {
+            List<FileTask> currentTasks = modpackManifest.getTasks().stream()
+                    .filter(task -> task.getCondition() == null || task.getCondition().matches(selectedFeatures))
+                    .collect(Collectors.toList());
 
-        if (oldManifest != null) {
-            // Lösche alte Dateien welche nicht mehr im aktuellen Manifest vorhanden sind
-            oldManifest.getTasks().stream()
-                    .filter(task -> currentTasks.stream().noneMatch(task1 -> task1.getTo().equals(task.getTo())))
-                    .map(task -> new File(instanceDir, task.getTo()))
-                    .forEach(File::delete);
+            tasks.addAll(currentTasks.stream()
+                    .map(task -> new DownloadCallable(new DownloadCallable.Downloadable(String.format(Constants.launcherObjects,
+                            task.getLocation()), task.getHash(), new File(instanceDir, task.getTo())), task.isUserFile()))
+                    .collect(Collectors.toList()));
+
+            if (oldManifest != null) {
+                // Lösche alte Dateien welche nicht mehr im aktuellen Manifest vorhanden sind
+                oldManifest.getTasks().stream()
+                        .filter(task -> currentTasks.stream().noneMatch(task1 -> task1.getTo().equals(task.getTo())))
+                        .map(task -> new File(instanceDir, task.getTo()))
+                        .forEach(File::delete);
+            }
         }
-
-        tasks.addAll(currentTasks.stream()
-                .map(task -> new DownloadCallable(new DownloadCallable.Downloadable(
-                        String.format(Constants.launcherObjects, task.getLocation()), task.getHash(), new File(instanceDir, task.getTo())
-                )))
-                .collect(Collectors.toList()));
 
         ExecutorCompletionService<File> completionService = new ExecutorCompletionService<>(LaunchMinecraft.downloadThreadPool);
         tasks.forEach(completionService::submit);
@@ -171,14 +171,12 @@ public class LaunchMinecraft {
                 .filter(library -> minecraftManifest.getLibraries().stream().noneMatch(lib -> lib.getName().equals(library.getName())))
                 .collect(Collectors.toList());
 
-        File instanceDir = new File(Launcher.getInstance().getSaveSubDirectory("instances"),
-                modpackManifest.getName());
-        instanceDir.mkdirs();
+        File instanceDir = modpackManifest.getInstanceDir();
 
         File runtimeDir = new File(Launcher.getInstance().getExecutableDirectory(), "runtime");
 
         AssetIndex assetIndex = LaunchHelper.mapper.readValue(new File(Launcher.getInstance().getSaveSubDirectory("assets/indexes"),
-                        minecraftManifest.getAssetIndex().getId() + ".json"), AssetIndex.class);
+                minecraftManifest.getAssetIndex().getId() + ".json"), AssetIndex.class);
 
         LaunchMinecraft.log.trace("Extrahiere Natives");
         File nativesDir = new File(Launcher.getInstance().getSaveSubDirectory("temp"), String.valueOf(System.currentTimeMillis()));
@@ -193,7 +191,7 @@ public class LaunchMinecraft {
                         if (library.getDownloads().getClassifiers() == null || !library.getDownloads().getClassifiers().containsKey(classifier)) {
                             return;
                         }
-                        File nativeFile = new File(Launcher.getInstance().getSaveSubDirectory("natives"), library.getPath(classifier));
+                        File nativeFile = new File(Launcher.getInstance().getSaveSubDirectory("libraries"), library.getPath(classifier));
 
                         try {
                             JarFile jarFile = new JarFile(nativeFile);
@@ -228,7 +226,6 @@ public class LaunchMinecraft {
         gameArguments.add(String.valueOf(Launcher.getInstance().getConfig().getGameWidth()));
         gameArguments.add("--height");
         gameArguments.add(String.valueOf(Launcher.getInstance().getConfig().getGameHeight()));
-
 
         List<String> jvmArguments = modpackManifest.getVersionManifest().getArguments().getJvmArguments() != null
                 && !modpackManifest.getVersionManifest().getArguments().getJvmArguments().isEmpty()

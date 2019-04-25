@@ -27,6 +27,9 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.util.UUIDTypeAdapter;
 
+import de.myftb.launcher.Constants;
+import de.myftb.launcher.cef.DataResourceHandler;
+
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -38,33 +41,38 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.cef.callback.CefCallback;
-import org.cef.handler.CefResourceHandlerAdapter;
-import org.cef.misc.IntRef;
-import org.cef.misc.StringRef;
-import org.cef.network.CefRequest;
-import org.cef.network.CefResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PlayerHeadScheme extends CefResourceHandlerAdapter {
+public class PlayerHeadScheme extends DataResourceHandler {
     private static final Logger log = LoggerFactory.getLogger(PlayerHeadScheme.class);
     private static final Map<String, byte[]> skinCache = new HashMap<>();
     private static final int targetSize = 256;
-    private byte[] data;
-    private int offset;
+
+    @Override
+    protected void fillDataForRequest(String path, Consumer<String> mimeTypeSetter, Consumer<byte[]> dataSetter) {
+        path = path.replace("-", "");
+        mimeTypeSetter.accept("image/png");
+
+        if (path.length() == 32) {
+            dataSetter.accept(PlayerHeadScheme.skinCache.computeIfAbsent(path, this::getSkin));
+        } else {
+            dataSetter.accept(new byte[0]);
+        }
+    }
 
     private byte[] getSkin(String uuid) {
         try {
             HttpResponse response = Request.Get("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid)
-                    .connectTimeout(3000)
-                    .socketTimeout(3000)
+                    .connectTimeout(Constants.connectTimeout)
+                    .socketTimeout(Constants.socketTimeout)
                     .execute()
                     .returnResponse();
 
@@ -90,8 +98,8 @@ public class PlayerHeadScheme extends CefResourceHandlerAdapter {
                     URI skinUri = new URI(skin.getUrl());
                     if (skinUri.getHost().endsWith(".mojang.com") || skinUri.getHost().endsWith(".minecraft.net")) {
                         HttpResponse skinResponse = Request.Get(skinUri)
-                                .connectTimeout(3000)
-                                .socketTimeout(3000)
+                                .connectTimeout(Constants.connectTimeout)
+                                .socketTimeout(Constants.socketTimeout)
                                 .execute()
                                 .returnResponse();
 
@@ -119,49 +127,6 @@ public class PlayerHeadScheme extends CefResourceHandlerAdapter {
         }
 
         return new byte[0];
-    }
-
-    @Override
-    public boolean processRequest(CefRequest request, CefCallback callback) {
-        String url = request.getURL().substring(13);
-        if (url.endsWith("/")) {
-            url = url.substring(0, url.indexOf('/'));
-        }
-
-        url = url.replace("-", "");
-
-        if (url.length() == 32) {
-            this.data = PlayerHeadScheme.skinCache.computeIfAbsent(url, this::getSkin);
-        } else {
-            this.data = new byte[0];
-        }
-
-        callback.Continue();
-        return true;
-    }
-
-    @Override
-    public void getResponseHeaders(CefResponse response, IntRef responseLength, StringRef redirectUrl) {
-        response.setMimeType("image/png");
-        response.setStatus(this.data.length > 0 ? 200 : 404);
-        responseLength.set(this.data.length);
-    }
-
-    @Override
-    public boolean readResponse(byte[] dataOut, int bytesToRead, IntRef bytesRead, CefCallback callback) {
-        boolean dataAvailable = false;
-
-        if (this.offset < this.data.length) {
-            final int min = Math.min(bytesToRead, this.data.length - this.offset);
-            System.arraycopy(this.data, this.offset, dataOut, 0, min);
-            this.offset += min;
-            bytesRead.set(min);
-            dataAvailable = true;
-        } else {
-            bytesRead.set(this.offset = 0);
-        }
-
-        return dataAvailable;
     }
 
 }

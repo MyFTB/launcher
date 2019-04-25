@@ -33,9 +33,16 @@ import de.myftb.launcher.models.modpacks.ModpackManifest;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
 import java.awt.Desktop;
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,8 +57,6 @@ public class IpcTopics {
     private static final Logger log = LoggerFactory.getLogger(IpcTopics.class);
     private final Launcher launcher;
     private final TopicMessageHandler ipcHandler;
-
-    private ModpackManifestList modpackList;
 
     public IpcTopics(Launcher launcher, TopicMessageHandler ipcHandler) {
         this.launcher = launcher;
@@ -131,14 +136,10 @@ public class IpcTopics {
 
     void onRequestInstallableModpacks(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
         try {
-            if (this.modpackList == null) {
-                this.modpackList = ManifestHelper.getManifests();
-            }
-
             List<ModpackManifest> installedPacks = ManifestHelper.getInstalledModpacks();
 
             ModpackManifestList manifestList = new ModpackManifestList();
-            manifestList.setPackages(this.modpackList.getPackages().stream()
+            manifestList.setPackages(this.launcher.getRemotePacks().getPackages().stream()
                     .filter(manifestRef -> installedPacks.stream()
                             .noneMatch(manifest -> manifest.getName().equals(manifestRef.getName())))
                     .collect(Collectors.toList())
@@ -210,37 +211,12 @@ public class IpcTopics {
             return;
         }
 
-        if (this.launcher.getConfig().getProfile() == null) {
-            this.ipcHandler.send("show_login_form", new JsonObject());
-            return;
-        }
-
-        boolean loggedIn = false;
-        if (this.launcher.getConfig().getProfile().isLoggedIn() || this.launcher.getConfig().getProfile().canLogIn()) {
-            try {
-                this.launcher.login();
-                loggedIn = true;
-            } catch (AuthenticationException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (!loggedIn) {
-            JsonObject jsonObject = new JsonObject();
-            Map<String, Object> profileData = this.launcher.getConfig().getProfile().saveForStorage();
-            if (profileData.containsKey("username")) {
-                jsonObject.addProperty("username", (String) profileData.get("username"));
-            }
-            this.ipcHandler.send("show_login_form", jsonObject);
-            return;
-        }
-
         try {
-            JsonObject launching = new JsonObject();
-            launching.addProperty("launching", true);
-            callback.success(launching);
-
-            LaunchMinecraft.launch(modpack.get(), this.launcher.getConfig().getProfile());
+            this.launcher.launchModpack(modpack.get(), () -> {
+                JsonObject launching = new JsonObject();
+                launching.addProperty("launching", true);
+                callback.success(launching);
+            });
 
             JsonObject closed = new JsonObject();
             closed.addProperty("closed", true);
@@ -248,6 +224,69 @@ public class IpcTopics {
         } catch (IOException | InterruptedException e) {
             callback.failure("Das Modpack konnte auf Grund eines Fehlers nicht gestartet werden");
             IpcTopics.log.warn("Das Modpack " + modpack.get().getName() + " konnte nicht gestartet werden", e);
+        }
+    }
+
+    void onModpackContextMenuClick(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        int index = data.get("index").getAsInt();
+        Optional<ModpackManifest> modpack = ManifestHelper.getInstalledModpacks().stream()
+                .filter(manifest -> manifest.getName().equals(data.get("pack").getAsString()))
+                .findFirst();
+
+        if (!modpack.isPresent()) {
+            callback.failure("Das Modpack konnte nicht gefunden werden");
+            return;
+        }
+
+        if (index == 1) { // Ordner
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                try {
+                    Desktop.getDesktop().open(modpack.get().getInstanceDir());
+                    callback.success(new JsonObject());
+                } catch (IOException e) {
+                    callback.failure("Der Ordner konnte nicht geöffnet werden");
+                    IpcTopics.log.warn("Der Ordner für " + modpack.get().getName() + " konnte nicht geöffnet werden", e);
+                }
+            } else {
+                callback.failure("Diese Aktion ist aktuell nicht ausführbar");
+            }
+        } else if (index == 2) { // Löschen
+            try {
+                Files.walk(modpack.get().getInstanceDir().toPath())
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+                callback.success(new JsonObject());
+            } catch (IOException e) {
+                callback.failure("Das Modpack " + modpack.get().getName() + " konnte nicht gelöscht werden");
+            }
+        } else if (index == 3) { // Aktualisieren
+        } else if (index == 4) { // Crashreport
+            File crashReportsDir = new File(modpack.get().getInstanceDir(), "crash-reports");
+            if (!crashReportsDir.isDirectory() || crashReportsDir.listFiles().length == 0) {
+                callback.failure("Es wurden keine Crash-Reports gefunden");
+                return;
+            }
+
+            Arrays.stream(crashReportsDir.listFiles(file -> file.getName().endsWith(".txt")))
+                    .max(Comparator.comparing(File::lastModified))
+                    .map(File::toPath)
+                    .ifPresent(crashReport -> {
+                        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                            try {
+                                String pasteUrl = HastebinHelper.post(Files.readAllBytes(crashReport));
+                                Desktop.getDesktop().browse(new URI(pasteUrl));
+                                callback.success(new JsonObject());
+                            } catch (IOException | URISyntaxException e) {
+                                callback.failure("Der Crashreport konnte nicht hochgeladen werden");
+                                IpcTopics.log.warn("Crashreport konnte nicht hochgeladen werden", e);
+                            }
+                        } else {
+                            callback.failure("Diese Aktion ist aktuell nicht ausführbar");
+                        }
+                    });
+        } else if (index == 5) { // Desktop-Verknüpfung
+
         }
     }
 

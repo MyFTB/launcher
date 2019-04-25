@@ -1,0 +1,23 @@
+.contextmenu {
+    display: none;
+    position: fixed;
+    z-index: 999999;
+    border-radius: 8px;
+    background-color: #111;
+    color: #eee;
+    padding: 0 20px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 4px 0 rgba(0,0,0,.2);
+
+    > ul {
+        > li {
+            padding: 5px 0;
+            transition: color .1s;
+            cursor: pointer;
+
+            &:hover {
+                color: #83da38;
+            }
+        }
+    }
+}

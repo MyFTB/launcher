@@ -33,9 +33,12 @@ module.exports = {
     },
     output: {
         filename: 'app.js',
-        path: path.resolve(__dirname, '../resources/webroot')
+        path: path.resolve(__dirname, 'build/webroot')
     },
     performance: {
         maxAssetSize: Number.MAX_VALUE
+    },
+    devServer: {
+        historyApiFallback: true,
     }
 };

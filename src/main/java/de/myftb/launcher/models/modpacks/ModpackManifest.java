@@ -20,8 +20,10 @@ package de.myftb.launcher.models.modpacks;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import de.myftb.launcher.Launcher;
 import de.myftb.launcher.models.minecraft.MinecraftVersionManifest;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -67,6 +69,12 @@ public class ModpackManifest {
 
     public List<FileTask> getTasks() {
         return this.tasks;
+    }
+
+    public File getInstanceDir() {
+        File instanceDir = new File(Launcher.getInstance().getSaveSubDirectory("instances"), this.getName());
+        instanceDir.mkdirs();
+        return instanceDir;
     }
 
 }

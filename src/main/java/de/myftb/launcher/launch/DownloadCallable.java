@@ -18,6 +18,8 @@
 
 package de.myftb.launcher.launch;
 
+import de.myftb.launcher.Constants;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -29,14 +31,21 @@ import org.slf4j.LoggerFactory;
 public class DownloadCallable implements Callable<File> {
     private static final Logger log = LoggerFactory.getLogger(DownloadCallable.class);
     protected final Downloadable downloadable;
+    private final boolean onlyCheckExistance;
+
+    public DownloadCallable(Downloadable downloadable, boolean onlyCheckExistance) {
+        this.downloadable = downloadable;
+        this.onlyCheckExistance = onlyCheckExistance;
+    }
 
     public DownloadCallable(Downloadable downloadable) {
-        this.downloadable = downloadable;
+        this(downloadable, false);
     }
 
     @Override
     public File call() throws Exception {
-        if (this.downloadable.targetFile.isFile() && LaunchHelper.getSha1(this.downloadable.targetFile).equals(this.downloadable.sha1)) {
+        if (this.downloadable.targetFile.isFile()
+                && (this.onlyCheckExistance || LaunchHelper.getSha1(this.downloadable.targetFile).equals(this.downloadable.sha1))) {
             DownloadCallable.log.trace("Überspringe Download von " + this.downloadable.url + ", Datei ist bereits aktuell");
             return this.downloadable.targetFile;
         }
@@ -46,13 +55,13 @@ public class DownloadCallable implements Callable<File> {
         this.downloadable.targetFile.getParentFile().mkdirs();
 
         Request.Get(this.downloadable.url)
-                .socketTimeout(3000)
-                .connectTimeout(3000)
+                .connectTimeout(Constants.connectTimeout)
+                .socketTimeout(Constants.socketTimeout)
                 .execute()
                 .saveContent(this.downloadable.targetFile);
 
         String sha1Sum = LaunchHelper.getSha1(this.downloadable.targetFile);
-        if (!sha1Sum.equals(this.downloadable.sha1)) {
+        if (!this.onlyCheckExistance && !sha1Sum.equals(this.downloadable.sha1)) {
             throw new IOException("Ungültige Prüfsumme beim Download von " + this.downloadable.url + ": " + sha1Sum + " erwartet: "
                     + this.downloadable.sha1);
         }

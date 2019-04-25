@@ -58,7 +58,7 @@ export default class AvailablePacks extends React.Component {
                 <div className="packs">
                     {this.state.packages && (
                         this.state.packages.map((pack, i) => {
-                            return <Modpack key={i} pack={pack} onClick={this.onModpackClick.bind(this, i)}></Modpack>
+                            return <Modpack key={i} pack={pack} packinstalled="true" onClick={this.onModpackClick.bind(this, i)}></Modpack>
                         })
                     )}
                 </div>

@@ -22,6 +22,17 @@ import placeholder from '../../img/pack_placeholder.png';
 
 export default class Modpack extends React.Component {
 
+    constructor(props) {
+        super(props)
+        this.onContextMenu = this.onContextMenu.bind(this);
+    }
+
+    componentWillUnmount() {
+        if (window.contextmenu_modpack === this) {
+            window.contextmenu_modpack = null;
+        }
+    }
+
     getLastUpdate() {
         return this.props.pack.version.split('_').reverse()
             .map((v, i) => i == 0
@@ -30,10 +41,33 @@ export default class Modpack extends React.Component {
             .join(' ');
     }
 
+    onContextMenu(e) {
+        if (this.props.packinstalled) {
+            e.preventDefault();
+
+            window.contextmenu_modpack = this;
+            let contextMenu = document.getElementsByClassName('contextmenu')[0];
+            contextMenu.style.left = 0;
+            contextMenu.style.top = 0;
+            contextMenu.style.display = 'block';
+            contextMenu.style.top = e.pageY + 'px';
+
+            if ((e.pageX + contextMenu.clientWidth) > document.body.clientWidth) {
+                contextMenu.style.left = (e.pageX - contextMenu.clientWidth) + 'px';
+            } else {
+                contextMenu.style.left = e.pageX + 'px';
+            }
+        }
+    }
+
+    onImageError(e) {
+        e.target.src = placeholder;
+    }
+
     render() {
         return (
-            <div className="pack" {...this.props}>
-                <img src={placeholder}></img>
+            <div className="pack" {...this.props} onContextMenu={this.onContextMenu}>
+                <img src={'modpackimage://launcher/' + encodeURI(this.props.pack.name)} onError={this.onImageError}></img>
                 <div className="blackout"></div>
                 <p><b>{this.props.pack.title}</b></p>
             </div>

@@ -36,7 +36,7 @@ public class Condition {
     }
 
     public boolean matches(List<String> selectedFeatures) {
-        if (condition.equals("requiresAll")) {
+        if (condition.equals("requireAll")) {
             for (String feature : this.features) {
                 if (!selectedFeatures.contains(feature)) {
                     return false;
@@ -44,7 +44,7 @@ public class Condition {
             }
 
             return true;
-        } else if (condition.equals("requiresAny")) {
+        } else if (condition.equals("requireAny")) {
             for (String feature : this.features) {
                 if (selectedFeatures.contains(feature)) {
                     return true;

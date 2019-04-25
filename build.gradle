@@ -1,6 +1,7 @@
 plugins {
 	id 'java'
 
+	id 'com.github.johnrengelman.shadow' version '4.0.4'
 	id 'com.github.hierynomus.license' version '0.15.0'
 	id 'nebula.info' version '5.0.3'
 	id 'checkstyle'
@@ -26,7 +27,7 @@ dependencies {
 	compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
 	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.5.8'
 
-	compile files('run/jcef/jcef.jar')
+	shadow files('run/jcef/jcef.jar')
 }
 
 jar {
@@ -37,7 +38,8 @@ jar {
 				'Implementation-Name': project.name,
 				'Implementation-Version': project.version,
 				'Implementation-Vendor': project.url,
-				'Class-Path': 'jcef/jcef.jar'
+				'Class-Path': 'jcef/jcef.jar',
+				'Main-Class': 'de.myftb.launcher.Launcher'
 		)
 	}
 }
@@ -46,10 +48,43 @@ jar {
 
 sourceCompatibility = targetCompatibility = '1.8'
 
+sourceSets.main.resources.srcDirs += 'src/main/ui/build'
+
 configure([compileJava, compileTestJava]) {
 	options.compilerArgs += ['-Xlint:all', '-Xlint:-path']
 	options.deprecation = true
 	options.encoding = 'UTF-8'
+}
+
+/*sourceSets {
+	main {
+		java {
+			srcDirs = ['build/src/main/java']
+		}
+	}
+}*/
+
+
+task prepareSources(type: Copy) {
+	from('src/main/java')
+	into('build/src/main/java')
+	filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [version: project.version])
+}
+
+import org.apache.tools.ant.taskdefs.condition.Os
+task buildWebroot(type: Exec) {
+	workingDir "$projectDir/src/main/ui"
+
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+		commandLine 'cmd', '/c', 'node_modules\\.bin\\webpack.cmd', '--mode', 'production'
+	} else {
+		commandLine './node_modules/.bin/webpack', '--mode', 'production'
+	}
+}
+processResources.dependsOn buildWebroot
+
+compileJava {
+	dependsOn prepareSources
 }
 
 task sourceJar(type: Jar) {

@@ -18,7 +18,6 @@
 
 import React from 'react';
 
-import ToggleSwitch from './base/ToggleSwitch.react';
 import RangeInput from './base/RangeInput.react';
 
 export default class Settings extends React.Component {
@@ -94,10 +93,6 @@ export default class Settings extends React.Component {
                     <p>Speicherverzeichnis</p>
                     <input id="installationDir" ref="installationDir" type="text" className="dir-chooser" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.installationDir} readOnly={!this.state.loaded}></input>
                     <button onClick={this.doInstallDirSelection}>...</button>
-                </div>
-                <div className="form-group">
-                    <p>Anonyme Nutzungsdaten</p>
-                    <ToggleSwitch id="metricsEnabled" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultChecked={this.state.metricsEnabled} readOnly={!this.state.loaded}></ToggleSwitch>
                 </div>
             </div>
         )

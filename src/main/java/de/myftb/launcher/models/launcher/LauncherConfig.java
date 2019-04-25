@@ -46,9 +46,6 @@ public class LauncherConfig {
     @Expose private String clientToken = UUID.randomUUID().toString();
     @Expose private String jvmArgs = "";
 
-    @Expose private boolean metricsEnabled = true;
-    @Expose private String metricsToken = UUID.randomUUID().toString();
-
     @Expose private int minMemory = 1024;
     @Expose private int maxMemory = 1024;
 
@@ -56,7 +53,7 @@ public class LauncherConfig {
     @Expose private int gameHeight = 480;
 
     @Expose private String packKey = "";
-    @Expose private String installationDir;
+    @Expose private String installationDir = "";
 
     @Expose private UserAuthentication profile = null;
 
@@ -74,22 +71,6 @@ public class LauncherConfig {
 
     public void setJvmArgs(String jvmArgs) {
         this.jvmArgs = jvmArgs;
-    }
-
-    public boolean isMetricsEnabled() {
-        return this.metricsEnabled;
-    }
-
-    public void setMetricsEnabled(boolean metricsEnabled) {
-        this.metricsEnabled = metricsEnabled;
-    }
-
-    public String getMetricsToken() {
-        return this.metricsToken;
-    }
-
-    public void setMetricsToken(String metricsToken) {
-        this.metricsToken = metricsToken;
     }
 
     public int getMinMemory() {

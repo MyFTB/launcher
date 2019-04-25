@@ -31,6 +31,12 @@ import Main from './components/Main.react';
 import Settings from './components/Settings.react';
 import AvailablePacks from './components/AvailablePacks.react';
 import InstalledPacks from './components/InstalledPacks.react';
+import ModpackContextMenu from './components/ModpackContextMenu.react';
+
+document.addEventListener('click', () => {
+    let contextMenu = document.getElementsByClassName('contextmenu')[0];
+    contextMenu.style.display = 'none';
+});
 
 ReactDOM.render(
     <Router>
@@ -43,6 +49,7 @@ ReactDOM.render(
                 <Route path="/modpacks" component={InstalledPacks} />
                 <Route path="/settings" component={Settings} />
             </div>
+            <ModpackContextMenu />
         </div>
     </Router>,
     document.getElementById('main')

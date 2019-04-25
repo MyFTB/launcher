@@ -26,7 +26,6 @@ export default class ExternalLink extends React.Component {
     }
 
     onClickHandler() {
-        console.log('CLICK');
         window.launcher.sendIpc('open_url', {url: this.refs.link.getAttribute('data-link')});
     }
 

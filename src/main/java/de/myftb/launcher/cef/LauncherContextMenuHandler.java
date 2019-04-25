@@ -18,7 +18,7 @@
 
 package de.myftb.launcher.cef;
 
-import de.myftb.launcher.gui.DevToolsDialog;
+import de.myftb.launcher.cef.gui.DevToolsDialog;
 
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -26,19 +26,28 @@ import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.CefContextMenuHandlerAdapter;
 
-public class DevToolsContextMenuHandler extends CefContextMenuHandlerAdapter {
+public class LauncherContextMenuHandler extends CefContextMenuHandlerAdapter {
+    private final boolean devTools;
+
+    public LauncherContextMenuHandler(boolean devTools) {
+        this.devTools = devTools;
+    }
 
     @Override
     public void onBeforeContextMenu(CefBrowser cefBrowser, CefFrame cefFrame, CefContextMenuParams cefContextMenuParams, CefMenuModel cefMenuModel) {
         cefMenuModel.clear();
-        cefMenuModel.addItem(2000, "DevTools");
+        if (this.devTools) {
+            cefMenuModel.addItem(2000, "DevTools");
+        }
     }
 
     @Override
     public boolean onContextMenuCommand(CefBrowser cefBrowser, CefFrame cefFrame, CefContextMenuParams cefContextMenuParams, int i, int i1) {
-        if (i == 2000) {
-            DevToolsDialog dialog = new DevToolsDialog(cefBrowser);
-            dialog.setVisible(true);
+        if (this.devTools) {
+            if (i == 2000) {
+                DevToolsDialog dialog = new DevToolsDialog(cefBrowser);
+                dialog.setVisible(true);
+            }
         }
 
         return false;

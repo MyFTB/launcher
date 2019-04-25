@@ -164,7 +164,29 @@ public class Arguments {
         @Override
         public void serialize(Argument value, JsonGenerator gen, SerializerProvider provider) throws IOException {
             if (value instanceof FilteredArgument) {
-                gen.writeObject(value);
+                FilteredArgument filteredArgument = (FilteredArgument) value;
+                if (filteredArgument.value.isEmpty()) {
+                    return;
+                }
+
+                gen.writeStartObject();
+                if (filteredArgument.value.size() > 1) {
+                    gen.writeArrayFieldStart("value");
+                    for (String val : filteredArgument.value) {
+                        gen.writeString(val);
+                    }
+                    gen.writeEndArray();
+                } else {
+                    gen.writeStringField("value", filteredArgument.value.get(0));
+                }
+
+                gen.writeArrayFieldStart("rules");
+                for (Rule rule : filteredArgument.rules) {
+                    gen.writeObject(rule);
+                }
+                gen.writeEndArray();
+
+                gen.writeEndObject();
             } else {
                 if (!value.value.isEmpty()) {
                     gen.writeString(value.value.get(0));
