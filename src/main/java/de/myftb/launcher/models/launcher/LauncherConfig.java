@@ -25,11 +25,13 @@ import com.google.gson.annotations.Expose;
 import com.mojang.authlib.AuthenticationService;
 import com.mojang.authlib.UserAuthentication;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
+import com.sun.management.OperatingSystemMXBean;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.management.ManagementFactory;
 import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -46,8 +48,8 @@ public class LauncherConfig {
     @Expose private String clientToken = UUID.randomUUID().toString();
     @Expose private String jvmArgs = "";
 
-    @Expose private int minMemory = 1024;
-    @Expose private int maxMemory = 1024;
+    @Expose private int maxMemory = LauncherConfig.getDefaultMemory();
+    @Expose private int minMemory = Math.max(1024, this.maxMemory / 2);
 
     @Expose private int gameWidth = 854;
     @Expose private int gameHeight = 480;
@@ -153,6 +155,23 @@ public class LauncherConfig {
         }
 
         return this;
+    }
+
+    private static int getDefaultMemory() {
+        try {
+            long memorySize = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize() / 1048576;
+            if (memorySize >= 16000) {
+                return 8192;
+            } else if (memorySize >= 12000) {
+                return 6144;
+            } else if (memorySize >= 8000) {
+                return 4096;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+
+        return 1024;
     }
 
 }

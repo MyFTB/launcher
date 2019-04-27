@@ -27,6 +27,7 @@ import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -87,14 +88,27 @@ public class ManifestHelper {
         List<ModpackManifest> instances = new ArrayList<>();
         for (File instanceDir : instanceDirs) {
             File manifestFile = new File(instanceDir, "manifest.json");
+            File successFile = new File(instanceDir, ".success");
+            if (!successFile.isFile()) {
+                continue;
+            }
+
+            try {
+                byte[] successBytes = Files.readAllBytes(successFile.toPath());
+                if (successBytes.length == 0 || successBytes[0] == 0) {
+                    continue;
+                }
+            } catch (IOException e) {
+                ManifestHelper.log.warn("Fehler beim lesen von Modpack-Installationsstatus " + successFile.getAbsolutePath(), e);
+                continue;
+            }
+
             if (manifestFile.isFile()) {
                 try {
                     instances.add(LaunchHelper.mapper.readValue(manifestFile, ModpackManifest.class));
                 } catch (IOException e) {
                     ManifestHelper.log.warn("Fehler beim Lesen von Modpack-Manifest " + manifestFile.getAbsolutePath(), e);
                 }
-            } else {
-                ManifestHelper.log.warn("Instanzverzeichnis " + instanceDir.getAbsolutePath() + " ohne Modpackmanifest gefunden");
             }
         }
 

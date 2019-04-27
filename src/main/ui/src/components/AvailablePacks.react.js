@@ -48,6 +48,8 @@ export default class AvailablePacks extends React.Component {
         } else if (this.state.changeToInstalled) {
             window.launcher.resetDialog();
             this.props.history.push('/modpacks');
+        } else {
+            window.launcher.resetDialog();
         }
     }
 
@@ -89,9 +91,10 @@ export default class AvailablePacks extends React.Component {
             } else if (data.installing) {
                 this.setState({ status: { progress: data.installing, pack: this.state.packages[index] } });
             } else if (data.installed) {
-                this.setState({ status: false, changeToInstalled: true });
+                let success = data.success;
+                this.setState({ status: false, changeToInstalled: success });
                 window.launcher.showDialog(false, [
-                    <p>Das Modpack {this.state.packages[index].title} wurde erfolgreich installiert</p>,
+                    <p>{success ? 'Das Modpack ' + this.state.packages[index].title + ' wurde erfolgreich installiert' : 'Bei der Installation von ' + this.state.packages[index].title + ' sind Fehler aufgetreten'}</p>,
                     <button className="btn" onClick={this.acceptDialog}>OK</button>
                 ]);
             }

@@ -30,6 +30,7 @@ import de.myftb.launcher.models.minecraft.Library;
 import de.myftb.launcher.models.minecraft.MinecraftVersionManifest;
 import de.myftb.launcher.models.modpacks.FileTask;
 import de.myftb.launcher.models.modpacks.ModpackManifest;
+import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -40,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -66,8 +68,11 @@ public class LaunchMinecraft {
                 return thread;
             });
 
+    private static List<Library> getAdditionalLibraries(ModpackManifest modpackManifest, MinecraftVersionManifest minecraftManifest) {
+        return Collections.emptyList();
+    }
 
-    public static void install(ModpackManifest modpackManifest, List<String> selectedFeatures, InstallationStatusListener statusListener)
+    public static boolean install(ModpackManifest modpackManifest, List<String> selectedFeatures, InstallationStatusListener statusListener)
             throws IOException {
         File instanceDir = modpackManifest.getInstanceDir();
         File manifestFile = new File(instanceDir, "manifest.json");
@@ -77,39 +82,39 @@ public class LaunchMinecraft {
         }
         LaunchHelper.mapper.writeValue(manifestFile, modpackManifest);
 
-        MinecraftVersionManifest minecraftManifest = ManifestHelper.getManifest(modpackManifest.getGameVersion());
+        List<DownloadCallable> tasks = new ArrayList<>();
 
+        MinecraftVersionManifest minecraftManifest = ManifestHelper.getManifest(modpackManifest.getGameVersion());
         List<Library> modpackLibs = modpackManifest.getVersionManifest().getLibraries().stream()
                 .filter(library -> minecraftManifest.getLibraries().stream().noneMatch(lib -> lib.getName().equals(library.getName())))
                 .collect(Collectors.toList());
 
-        MinecraftVersionManifest.Download clientDownload = minecraftManifest.getDownloads().get("client");
-
-        List<DownloadCallable> tasks = new ArrayList<>();
-
         // Client Jar
-
+        MinecraftVersionManifest.Download clientDownload = minecraftManifest.getDownloads().get("client");
         tasks.add(new DownloadCallable(new DownloadCallable.Downloadable(
                 clientDownload.getUrl(),
                 clientDownload.getSha1(),
                 new File(Launcher.getInstance().getSaveSubDirectory("versions"), minecraftManifest.getId() + ".jar"))));
 
         // Vanilla Minecraft Libraries (Durch Vanilla Manifest)
-
         tasks.addAll(minecraftManifest.getLibraries().stream()
                 .flatMap(libary -> libary.getDownloadables().stream())
                 .map(DownloadCallable::new)
                 .collect(Collectors.toList()));
 
-        // Asset Index
+        // Zusätzliche Libraries (Launcherfeatures oä.)
+        tasks.addAll(LaunchMinecraft.getAdditionalLibraries(modpackManifest, minecraftManifest).stream()
+                .flatMap(libary -> libary.getDownloadables().stream())
+                .map(DownloadCallable::new)
+                .collect(Collectors.toList()));
 
+        // Asset Index
         String assetIndexStr = LaunchHelper.download(minecraftManifest.getAssetIndex().getUrl(), minecraftManifest.getAssetIndex().getSha1());
         AssetIndex assetIndex = LaunchHelper.mapper.readValue(assetIndexStr, AssetIndex.class);
         Files.write(new File(Launcher.getInstance().getSaveSubDirectory("assets/indexes"),
                 minecraftManifest.getAssetIndex().getId() + ".json").toPath(), assetIndexStr.getBytes(StandardCharsets.UTF_8));
 
         // Assets
-
         tasks.addAll(assetIndex.getObjects().entrySet().stream()
                 .map(entry -> new DownloadCallable(new DownloadCallable.Downloadable(entry.getValue().getDownloadUrl(),
                         entry.getValue().getHash(),
@@ -120,14 +125,12 @@ public class LaunchMinecraft {
                 .collect(Collectors.toList()));
 
         // Libraries welche durch das Modpack benötigt werden (Beispielsweise Forge)
-
         tasks.addAll(modpackLibs.stream()
                 .map(library -> new MavenDownloadCallable(library.getName(),
                         new File(Launcher.getInstance().getSaveSubDirectory("libraries"), library.getPath(null))))
                 .collect(Collectors.toList()));
 
         // Modpack Installation Tasks
-
         if (modpackManifest.getTasks() != null) {
             List<FileTask> currentTasks = modpackManifest.getTasks().stream()
                     .filter(task -> task.getCondition() == null || task.getCondition().matches(selectedFeatures))
@@ -161,19 +164,23 @@ public class LaunchMinecraft {
             statusListener.progressChange(tasks.size(), i + 1, failed);
         }
 
-        LaunchMinecraft.log.info("Modpack " + modpackManifest.getTitle() + " erfolgreich installiert");
+        LaunchMinecraft.log.info("Modpack " + modpackManifest.getTitle() + " installiert");
+        boolean success = failed == 0;
+        Files.write(new File(instanceDir, ".success").toPath(), new byte[success ? 1 : 0]);
+
+        return success;
     }
 
     public static void launch(ModpackManifest modpackManifest, UserAuthentication userAuthentication) throws IOException, InterruptedException {
         MinecraftVersionManifest minecraftManifest = ManifestHelper.getManifest(modpackManifest.getGameVersion());
-
-        List<Library> modpackLibs = modpackManifest.getVersionManifest().getLibraries().stream()
-                .filter(library -> minecraftManifest.getLibraries().stream().noneMatch(lib -> lib.getName().equals(library.getName())))
-                .collect(Collectors.toList());
-
         File instanceDir = modpackManifest.getInstanceDir();
-
         File runtimeDir = new File(Launcher.getInstance().getExecutableDirectory(), "runtime");
+
+        if (!Launcher.getInstance().getRemotePacks().getPackByName(modpackManifest.getName())
+                .map(ModpackManifestList.ModpackManifestReference::getVersion).orElse(modpackManifest.getVersion())
+                .equals(modpackManifest.getVersion())) {
+
+        }
 
         AssetIndex assetIndex = LaunchHelper.mapper.readValue(new File(Launcher.getInstance().getSaveSubDirectory("assets/indexes"),
                 minecraftManifest.getAssetIndex().getId() + ".json"), AssetIndex.class);
@@ -243,6 +250,10 @@ public class LaunchMinecraft {
 
         jvmArguments.addAll(Arrays.asList(Launcher.getInstance().getConfig().getJvmArgs().split(" ")));
 
+        List<Library> modpackLibs = modpackManifest.getVersionManifest().getLibraries().stream()
+                .filter(library -> minecraftManifest.getLibraries().stream().noneMatch(lib -> lib.getName().equals(library.getName())))
+                .collect(Collectors.toList());
+
         File librariesDir = Launcher.getInstance().getSaveSubDirectory("libraries");
         List<String> classpath = minecraftManifest.getLibraries().stream()
                 .map(library -> new File(librariesDir, library.getPath(null)))
@@ -293,16 +304,20 @@ public class LaunchMinecraft {
         builder.directory(instanceDir);
         builder.inheritIO();
 
-        LaunchMinecraft.log.info("Alle Dateien aktuell, starte Minecraft");
-        Process minecraftProcess = builder.start();
-        minecraftProcess.waitFor();
+        try {
+            LaunchMinecraft.log.info("Alle Dateien aktuell, starte Minecraft");
+            Launcher.getInstance().getDiscordIntegration().setRunningModpack(modpackManifest);
+            Process minecraftProcess = builder.start();
+            minecraftProcess.waitFor();
+        } finally {
+            Launcher.getInstance().getDiscordIntegration().setRunningModpack(null);
 
-        LaunchMinecraft.log.trace("Lösche entpackte Natives");
-        Files.walk(nativesDir.toPath())
-                .map(Path::toFile)
-                .sorted(Comparator.naturalOrder())
-                .forEach(File::delete);
-        nativesDir.delete();
+            LaunchMinecraft.log.trace("Lösche entpackte Natives");
+            Files.walk(nativesDir.toPath())
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        }
     }
 
     @FunctionalInterface

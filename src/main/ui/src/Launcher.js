@@ -120,6 +120,11 @@ export default class Launcher extends React.Component {
         });
     }
 
+    logout() {
+        this.sendIpc('logout');
+        this.state.loginListeners.forEach(comp => comp.onLogin(false));
+    }
+
     render() {
         return (
             <div>

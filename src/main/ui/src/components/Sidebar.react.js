@@ -33,7 +33,10 @@ export default class Sidebar extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {profile: false};
+        this.state = {profile: false, hoverLogout: false};
+        this.onProfileMouseEnter = this.onProfileMouseEnter.bind(this);
+        this.onProfileMouseLeave = this.onProfileMouseLeave.bind(this);
+        this.onProfileClick = this.onProfileClick.bind(this);
     }
 
     componentDidMount() {
@@ -48,6 +51,18 @@ export default class Sidebar extends React.Component {
         this.setState({profile: profile});
     }
 
+    onProfileMouseEnter() {
+        this.setState({hoverLogout: true});
+    }
+
+    onProfileMouseLeave() {
+        this.setState({hoverLogout: false});
+    }
+
+    onProfileClick() {
+        window.launcher.logout();
+    }
+
     render() {
         return (
             <div className="sidebar">
@@ -59,7 +74,10 @@ export default class Sidebar extends React.Component {
                     <li><NavLink to="/settings" activeClassName="active"><FontAwesomeIcon icon="cogs"/> Einstellungen</NavLink></li>
                     
                     {this.state.profile && (
-                        <li className="profile"><img src={"playerhead://launcher/" + this.state.profile.id}></img> Angemeldet als: {this.state.profile.name}</li>
+                        <li className="profile" onMouseEnter={this.onProfileMouseEnter} onMouseLeave={this.onProfileMouseLeave} onClick={this.onProfileClick}>
+                            <img src={"playerhead://launcher/" + this.state.profile.id}></img>
+                            {this.state.hoverLogout ? (<span>Abmelden</span>) : (<span>Angemeldet als: {this.state.profile.name}</span>)}
+                        </li>
                     )}
                 </ul>
             </div>

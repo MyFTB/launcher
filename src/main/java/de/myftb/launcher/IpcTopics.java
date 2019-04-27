@@ -168,11 +168,9 @@ public class IpcTopics {
             ModpackManifestList.ModpackManifestReference reference = new Gson().fromJson(data, ModpackManifestList.ModpackManifestReference.class);
             ModpackManifest manifest = ManifestHelper.getManifest(reference);
             if ((manifest.getFeatures() != null && !manifest.getFeatures().isEmpty()) && !data.has("selected_features")) {
-
                 JsonObject jsonObject = new JsonObject();
                 jsonObject.addProperty("features", LaunchHelper.mapper.writeValueAsString(manifest.getFeatures()));
                 callback.success(jsonObject);
-
             } else {
                 List<String> selectedFeatures = (manifest.getFeatures() == null || manifest.getFeatures().isEmpty())
                         ? Collections.emptyList()
@@ -181,7 +179,7 @@ public class IpcTopics {
                         .collect(Collectors.toList());
                 IpcTopics.log.info("Installiere " + manifest.getTitle() + " mit Features: " + selectedFeatures);
 
-                LaunchMinecraft.install(manifest, selectedFeatures, (total, finished, failed) -> {
+                boolean success = LaunchMinecraft.install(manifest, selectedFeatures, (total, finished, failed) -> {
                     JsonObject jsonObject = new JsonObject();
                     JsonObject status = new JsonObject();
                     status.addProperty("total", total);
@@ -193,6 +191,7 @@ public class IpcTopics {
 
                 JsonObject jsonObject = new JsonObject();
                 jsonObject.addProperty("installed", true);
+                jsonObject.addProperty("success", success);
                 callback.success(jsonObject);
             }
         } catch (Exception e) {
@@ -288,6 +287,11 @@ public class IpcTopics {
         } else if (index == 5) { // Desktop-Verknüpfung
 
         }
+    }
+
+    void onLogout(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        this.launcher.getConfig().setProfile(null);
+        this.ipcHandler.send("show_login_form", new JsonObject());
     }
 
 }

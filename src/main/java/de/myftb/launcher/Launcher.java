@@ -27,6 +27,7 @@ import de.myftb.launcher.cef.LauncherContextMenuHandler;
 import de.myftb.launcher.cef.SeqRequestHandler;
 import de.myftb.launcher.cef.gui.CefFrame;
 import de.myftb.launcher.cef.ipc.TopicMessageHandler;
+import de.myftb.launcher.integration.DiscordIntegration;
 import de.myftb.launcher.launch.LaunchMinecraft;
 import de.myftb.launcher.launch.ManifestHelper;
 import de.myftb.launcher.models.launcher.LauncherConfig;
@@ -68,6 +69,7 @@ public class Launcher {
     private final JFrame window;
     private final TopicMessageHandler ipcHandler;
     private final IpcTopics ipcTopics;
+    private final DiscordIntegration discordIntegration;
 
     private LauncherConfig config;
     private ModpackManifestList modpackList;
@@ -133,6 +135,9 @@ public class Launcher {
             this.window.setSize(960, 576);
             this.window.setMinimumSize(this.window.getSize());
             this.window.setVisible(true);
+
+            this.discordIntegration = new DiscordIntegration();
+            this.discordIntegration.setup();
         } catch (Exception e) {
             if (this.webServer != null) {
                 this.webServer.stop();
@@ -153,6 +158,7 @@ public class Launcher {
         this.ipcHandler.listenAsync("install_modpack", this.ipcTopics::onInstallModpack);
         this.ipcHandler.listenAsync("launch_modpack", this.ipcTopics::onLaunchModpack);
         this.ipcHandler.listenAsync("modpack_menu_click", this.ipcTopics::onModpackContextMenuClick);
+        this.ipcHandler.listenAsync("logout", this.ipcTopics::onLogout);
     }
 
     /**
@@ -287,6 +293,10 @@ public class Launcher {
         }
 
         return this.modpackList;
+    }
+
+    public DiscordIntegration getDiscordIntegration() {
+        return this.discordIntegration;
     }
 
     public String getVersion() {

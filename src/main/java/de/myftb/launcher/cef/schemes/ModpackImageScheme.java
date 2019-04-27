@@ -42,9 +42,7 @@ public class ModpackImageScheme extends DataResourceHandler {
         mimeTypeSetter.accept("image/png");
 
         try {
-            Optional<String> imageLocation = Launcher.getInstance().getRemotePacks().getPackages().stream()
-                    .filter(reference -> reference.getName().equals(path))
-                    .findFirst()
+            Optional<String> imageLocation = Launcher.getInstance().getRemotePacks().getPackByName(path)
                     .map(ModpackManifestList.ModpackManifestReference::getLocation)
                     .map(location -> location.substring(0, location.lastIndexOf('.')) + ".png");
 
@@ -55,7 +53,6 @@ public class ModpackImageScheme extends DataResourceHandler {
 
             File cacheFile = new File(Launcher.getInstance().getSaveSubDirectory("cache"), imageLocation.get());
             if (!cacheFile.isFile() || (System.currentTimeMillis() - cacheFile.lastModified()) >= 259200000) {
-                System.out.println("Request " + "https://launcher.myftb.de/images/" + imageLocation.get());
                 Request.Get("https://launcher.myftb.de/images/" + imageLocation.get())
                         .connectTimeout(Constants.connectTimeout)
                         .socketTimeout(Constants.socketTimeout)

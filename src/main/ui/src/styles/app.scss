@@ -68,10 +68,17 @@ $sidebarWidth: $iconSize + 180px;
                 position: absolute;
                 bottom: 0;
                 font-size: 13px;
+                transition: color .2s;
+                cursor: pointer;
+
                 > img {
                     width: 48px;
                     padding: 8px;
                     box-sizing: border-box;
+                }
+
+                &:hover {
+                    color: red;
                 }
             }
         }

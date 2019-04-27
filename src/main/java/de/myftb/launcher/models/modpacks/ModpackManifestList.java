@@ -21,6 +21,7 @@ package de.myftb.launcher.models.modpacks;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.List;
+import java.util.Optional;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ModpackManifestList {
@@ -32,6 +33,12 @@ public class ModpackManifestList {
 
     public List<ModpackManifestReference> getPackages() {
         return this.packages;
+    }
+
+    public Optional<ModpackManifestReference> getPackByName(String name) {
+        return this.getPackages().stream()
+                .filter(reference -> reference.getName().equals(name))
+                .findFirst();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
