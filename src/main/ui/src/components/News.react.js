@@ -18,40 +18,36 @@
 
 import React from 'react';
 
-import Modpack from './base/Modpack.react';
+import ExternalLink from './base/ExternalLink.react';
 
-export default class AvailablePacks extends React.Component {
+export default class News extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {packages: false};
+        this.state = {posts: false};
     }
 
     componentDidMount() {
         window.launcher.loading(true);
-        window.launcher.sendIpc('request_installed_modpacks', false, (err, data) => {
+        window.launcher.sendIpc('request_posts', false, (err, data) => {
             window.launcher.loading(false);
             if (err) {
                 return window.launcher.showDialog(true, <p>{err}</p>);
             }
-            this.setState({ packages: JSON.parse(data.packages).sort((a, b) => a.title.localeCompare(b.title)) });
+            this.setState({posts: data.posts});
         });
-    }
-
-    onModpackClick(index) {
-        window.launcher.launchModpack(this.state.packages[index].name);
     }
 
     render() {
         return (
-            <div>
-                <div className="packs">
-                    {this.state.packages && (
-                        this.state.packages.map((pack, i) => {
-                            return <Modpack key={i} pack={pack} packinstalled="true" onClick={this.onModpackClick.bind(this, i)}></Modpack>
-                        })
-                    )}
-                </div>
+            <div className="news">
+                {this.state.posts && (
+                    this.state.posts.map((post, i) => {
+                        return (
+                            <div key={i}><ExternalLink data-link={post.url}>{post.title}</ExternalLink></div>
+                        )
+                    })
+                )}
             </div>
         )
     }

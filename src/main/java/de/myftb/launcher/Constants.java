@@ -26,6 +26,7 @@ public class Constants {
     public static final String packList = "http://packs.myftb.de/packs/packages.php?key=%s";
     public static final String packManifest = "http://packs.myftb.de/packs/%s";
     public static final String pasteTarget = "https://paste.myftb.de";
+    public static final String postsApi = "https://myftb.de/api/posts";
 
     public static final int connectTimeout = 5000;
     public static final int socketTimeout = 30000;

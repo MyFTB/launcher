@@ -17,14 +17,21 @@
  */
 
 import React from 'react';
+import { NavLink } from "react-router-dom";
 
 import Loading from './components/Loading.react';
+
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTerminal } from '@fortawesome/free-solid-svg-icons'
+
+library.add(faTerminal);
 
 export default class Launcher extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {loading: true, loginForm: false, loginFormPrefill: false, loginDisabled: true, loginError: '', profile: false, dialog: false, dialogCloseable: false, loginListeners: []};
+        this.state = {loading: true, loginForm: false, loginFormPrefill: false, loginDisabled: true, loginError: '', profile: false, dialog: false, dialogCloseable: false, loginListeners: [], modpackRunning: false};
         window.launcher = this;
 
         this.handleLoginInput = this.handleLoginInput.bind(this);
@@ -102,6 +109,22 @@ export default class Launcher extends React.Component {
         });
     }
 
+    launchModpack(modpack) {
+        this.loading(true);
+        this.sendIpc('launch_modpack', {modpack: modpack}, (err, data) => {
+            this.loading(false);
+            if (err) {
+                return window.launcher.showDialog(true, <p>{err}</p>);
+            }
+
+            if (data.launching) {
+                this.setState({modpackRunning: true});
+            } else if (data.closed) {
+                this.setState({modpackRunning: false});
+            }
+        });
+    }
+
     handleLoginInput(e) {
         let disabled = document.getElementById('username').value.trim().length == 0 || document.getElementById('password').value.trim().length == 0
         this.setState({loginDisabled: disabled});
@@ -147,6 +170,10 @@ export default class Launcher extends React.Component {
                         </div>
                     </div>
                 )}
+
+                <div className={'console-breakout' + (this.state.modpackRunning ? ' active': '')}>
+                    <NavLink to="/settings" activeClassName="active"><FontAwesomeIcon icon="terminal"/></NavLink>
+                </div>
 
                 {this.state.loading && <Loading />}
 

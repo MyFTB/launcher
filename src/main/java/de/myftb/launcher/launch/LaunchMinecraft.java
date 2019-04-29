@@ -60,6 +60,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LaunchMinecraft {
+    private static boolean running = false;
     private static final Logger log = LoggerFactory.getLogger(LaunchMinecraft.class);
     private static final ExecutorService downloadThreadPool = Executors
             .newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors(), runnable -> {
@@ -166,15 +167,18 @@ public class LaunchMinecraft {
 
         LaunchMinecraft.log.info("Modpack " + modpackManifest.getTitle() + " installiert");
         boolean success = failed == 0;
-        Files.write(new File(instanceDir, ".success").toPath(), new byte[success ? 1 : 0]);
+        Files.write(new File(instanceDir, ".success").toPath(), new byte[]{(byte) (success ? 1 : 0)});
 
         return success;
     }
 
     public static void launch(ModpackManifest modpackManifest, UserAuthentication userAuthentication) throws IOException, InterruptedException {
+        if (LaunchMinecraft.running) {
+            throw new IllegalStateException("Es läuft bereits ein Modpack");
+        }
+
         MinecraftVersionManifest minecraftManifest = ManifestHelper.getManifest(modpackManifest.getGameVersion());
         File instanceDir = modpackManifest.getInstanceDir();
-        File runtimeDir = new File(Launcher.getInstance().getExecutableDirectory(), "runtime");
 
         if (!Launcher.getInstance().getRemotePacks().getPackByName(modpackManifest.getName())
                 .map(ModpackManifestList.ModpackManifestReference::getVersion).orElse(modpackManifest.getVersion())
@@ -292,7 +296,8 @@ public class LaunchMinecraft {
         tokens.put("max_memory", String.valueOf(Launcher.getInstance().getConfig().getMaxMemory()));
 
         List<String> arguments = new LinkedList<>();
-        arguments.add(new File(runtimeDir, "bin/java.exe").getAbsolutePath());
+        File runtimeDir = new File(Launcher.getInstance().getExecutableDirectory(), "runtime");
+        arguments.add(new File(runtimeDir, "bin/java" + (Platform.getPlatform() == Platform.WINDOWS ? ".exe" : "")).getAbsolutePath());
         arguments.addAll(jvmArguments);
         arguments.add(modpackManifest.getVersionManifest().getMainClass());
         arguments.addAll(gameArguments);
@@ -302,15 +307,16 @@ public class LaunchMinecraft {
 
         ProcessBuilder builder = new ProcessBuilder(arguments);
         builder.directory(instanceDir);
-        builder.inheritIO();
 
         try {
             LaunchMinecraft.log.info("Alle Dateien aktuell, starte Minecraft");
             Launcher.getInstance().getDiscordIntegration().setRunningModpack(modpackManifest);
+            LaunchMinecraft.running = true;
             Process minecraftProcess = builder.start();
             minecraftProcess.waitFor();
         } finally {
             Launcher.getInstance().getDiscordIntegration().setRunningModpack(null);
+            LaunchMinecraft.running = false;
 
             LaunchMinecraft.log.trace("Lösche entpackte Natives");
             Files.walk(nativesDir.toPath())

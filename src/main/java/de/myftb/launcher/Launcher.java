@@ -63,7 +63,6 @@ public class Launcher {
     private static Launcher instance;
 
     private final Javalin webServer;
-
     private final CefApp cefApp;
     private final CefBrowser cefBrowser;
     private final JFrame window;
@@ -159,6 +158,7 @@ public class Launcher {
         this.ipcHandler.listenAsync("launch_modpack", this.ipcTopics::onLaunchModpack);
         this.ipcHandler.listenAsync("modpack_menu_click", this.ipcTopics::onModpackContextMenuClick);
         this.ipcHandler.listenAsync("logout", this.ipcTopics::onLogout);
+        this.ipcHandler.listenAsync("request_posts", this.ipcTopics::onRequestPosts);
     }
 
     /**

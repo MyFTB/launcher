@@ -1,0 +1,12 @@
+.news {
+    > div {
+        border-radius: 8px;
+        background-color: #222;
+        padding: 8px;
+        box-shadow: 0 2px 4px 0 rgba(0,0,0,.2);
+
+        &:not(:last-child) {
+            margin-bottom: 10px;
+        }
+    }
+}

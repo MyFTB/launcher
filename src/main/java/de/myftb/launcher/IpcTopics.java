@@ -20,6 +20,7 @@ package de.myftb.launcher;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.Agent;
@@ -35,6 +36,7 @@ import de.myftb.launcher.models.modpacks.ModpackManifestList;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -50,6 +52,8 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.swing.JFileChooser;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +61,7 @@ public class IpcTopics {
     private static final Logger log = LoggerFactory.getLogger(IpcTopics.class);
     private final Launcher launcher;
     private final TopicMessageHandler ipcHandler;
+    private JsonArray posts = null;
 
     public IpcTopics(Launcher launcher, TopicMessageHandler ipcHandler) {
         this.launcher = launcher;
@@ -220,6 +225,8 @@ public class IpcTopics {
             JsonObject closed = new JsonObject();
             closed.addProperty("closed", true);
             callback.success(closed);
+        } catch (IllegalStateException e) {
+            callback.failure(e.getLocalizedMessage());
         } catch (IOException | InterruptedException e) {
             callback.failure("Das Modpack konnte auf Grund eines Fehlers nicht gestartet werden");
             IpcTopics.log.warn("Das Modpack " + modpack.get().getName() + " konnte nicht gestartet werden", e);
@@ -292,6 +299,28 @@ public class IpcTopics {
     void onLogout(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
         this.launcher.getConfig().setProfile(null);
         this.ipcHandler.send("show_login_form", new JsonObject());
+    }
+
+    void onRequestPosts(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        if (this.posts == null) {
+            try {
+                HttpResponse response = Request.Get(Constants.postsApi)
+                        .connectTimeout(Constants.connectTimeout)
+                        .socketTimeout(Constants.socketTimeout)
+                        .execute()
+                        .returnResponse();
+
+                this.posts = new Gson().fromJson(new InputStreamReader(response.getEntity().getContent()), JsonElement.class).getAsJsonArray();
+            } catch (IOException e) {
+                callback.failure("Die Beiträge konnten nicht abgerufen werdne");
+                IpcTopics.log.warn("Fehler beim Abrufen der Website Posts", e);
+                return;
+            }
+        }
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add("posts", this.posts);
+        callback.success(jsonObject);
     }
 
 }

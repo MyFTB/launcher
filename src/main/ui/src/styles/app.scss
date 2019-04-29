@@ -23,6 +23,7 @@
 @import 'packs.scss';
 @import 'progressbar.scss';
 @import 'contextmenu.scss';
+@import 'news.scss';
 
 @keyframes fade-in {
     from {
@@ -49,6 +50,7 @@ $sidebarWidth: $iconSize + 180px;
     transition: max-width .3s;
     overflow: hidden;
     z-index: 100;
+    box-shadow: 4px 2px 4px 0 rgba(0, 0, 0, 0.2);
 
     &:hover {
         max-width: $sidebarWidth;
@@ -96,6 +98,7 @@ $sidebarWidth: $iconSize + 180px;
     .svg-inline--fa {
         font-size: $iconSize / 2;
         width: $iconSize;
+        margin-right: 1px;
     }
 }
 
@@ -177,5 +180,28 @@ $sidebarWidth: $iconSize + 180px;
         & + .btn {
             margin-left: 10px;
         }
+    }
+}
+
+.console-breakout {
+    position: fixed;
+    right: -48px;
+    bottom: 30px;
+    background: #333;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    width: 48px;
+    padding: 11px 0;
+    transition: right .1s;
+
+    .svg-inline--fa {
+        font-size: 16px;
+        width: $iconSize;
+        margin-right: 1px;
+    }
+
+    &.active {
+        right: 0;
     }
 }

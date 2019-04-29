@@ -28,6 +28,7 @@ import './fonts/lato.ttf';
 
 import Sidebar from './components/Sidebar.react';
 import Main from './components/Main.react';
+import News from './components/News.react';
 import Settings from './components/Settings.react';
 import AvailablePacks from './components/AvailablePacks.react';
 import InstalledPacks from './components/InstalledPacks.react';
@@ -45,6 +46,7 @@ ReactDOM.render(
             <Launcher />
             <div className="content">
                 <Route exact path="/" component={Main} />
+                <Route path="/news" component={News} />
                 <Route path="/install" component={AvailablePacks} />
                 <Route path="/modpacks" component={InstalledPacks} />
                 <Route path="/settings" component={Settings} />

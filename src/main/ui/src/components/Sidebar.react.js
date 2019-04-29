@@ -23,11 +23,11 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHome, faNewspaper, faBoxOpen, faCloud, faCogs } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faHome)
-library.add(faNewspaper)
-library.add(faBoxOpen)
-library.add(faCloud)
-library.add(faCogs)
+library.add(faHome);
+library.add(faNewspaper);
+library.add(faBoxOpen);
+library.add(faCloud);
+library.add(faCogs);
 
 export default class Sidebar extends React.Component {
 
