@@ -21,39 +21,30 @@ package de.myftb.launcher;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.exceptions.AuthenticationException;
 
-import de.myftb.launcher.cef.AuthRequestHandler;
 import de.myftb.launcher.cef.BlockExternalRequestHandler;
 import de.myftb.launcher.cef.LauncherContextMenuHandler;
-import de.myftb.launcher.cef.SeqRequestHandler;
 import de.myftb.launcher.cef.gui.CefFrame;
 import de.myftb.launcher.cef.ipc.TopicMessageHandler;
 import de.myftb.launcher.integration.DiscordIntegration;
+import de.myftb.launcher.integration.ModpackWebstart;
 import de.myftb.launcher.launch.LaunchMinecraft;
 import de.myftb.launcher.launch.ManifestHelper;
 import de.myftb.launcher.models.launcher.LauncherConfig;
 import de.myftb.launcher.models.modpacks.ModpackManifest;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
-import io.javalin.Javalin;
-import io.javalin.UnauthorizedResponse;
-import io.javalin.core.util.JettyServerUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Map;
-import java.util.UUID;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import org.cef.CefApp;
 import org.cef.CefClient;
 import org.cef.OS;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefMessageRouter;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,86 +53,60 @@ public class Launcher {
     private static boolean development = false;
     private static Launcher instance;
 
-    private final Javalin webServer;
     private final CefApp cefApp;
     private final CefBrowser cefBrowser;
     private final JFrame window;
     private final TopicMessageHandler ipcHandler;
     private final IpcTopics ipcTopics;
     private final DiscordIntegration discordIntegration;
-
+    private ModpackWebstart webstartHandler;
     private LauncherConfig config;
     private ModpackManifestList modpackList;
 
-    public Launcher() {
-        String uuid = UUID.randomUUID().toString();
-        if (!Launcher.development) {
-            this.webServer = Javalin.create()
-                    .server(() -> {
-                        Server server = JettyServerUtil.defaultServer();
-                        ((QueuedThreadPool) server.getThreadPool()).setDaemon(true);
+    public Launcher() throws Exception {
+        this.config = new LauncherConfig();
+        this.config = this.config.readConfig(this.getExecutableDirectory()); // Workaround damit Profile korrekt gelesen werden.
+        this.config = this.config.readConfig(this.getExecutableDirectory()); // Zukünftig vielleicht einen Custom (De)Serializer?
+        this.saveConfig();
 
-                        ServerConnector connector = new ServerConnector(server);
-                        connector.setHost("127.0.0.1"); //NOPMD
-                        server.setConnectors(new Connector[]{ connector });
+        this.cefApp = CefFrame.getApp();
+        CefApp.CefVersion version = cefApp.getVersion();
+        Launcher.log.info("JCef Version: {}", version.getJcefVersion());
+        Launcher.log.info("Cef Version: {}", version.getCefVersion());
+        Launcher.log.info("Chrome Version: {}", version.getChromeVersion());
 
-                        return server;
-                    })
-                    .before(ctx -> {
-                        if (!uuid.equals(ctx.header("ClientUID"))) {
-                            throw new UnauthorizedResponse();
-                        }
-                    })
-                    .disableStartupBanner()
-                    .enableStaticFiles("/webroot")
-                    .port(0)
-                    .start();
-        } else {
-            this.webServer = null;
-        }
+        CefClient client = this.cefApp.createClient();
+        client.addRequestHandler(new BlockExternalRequestHandler());
+        client.addContextMenuHandler(new LauncherContextMenuHandler(Launcher.development));
 
-        try {
-            this.config = new LauncherConfig();
-            this.config = this.config.readConfig(this.getExecutableDirectory()); // Workaround damit Profile korrekt gelesen werden.
-            this.config = this.config.readConfig(this.getExecutableDirectory()); // Zukünftig vielleicht einen Custom (De)Serializer?
-            this.saveConfig();
+        CefMessageRouter.CefMessageRouterConfig routerConfig = new CefMessageRouter.CefMessageRouterConfig();
+        routerConfig.jsQueryFunction = "ipcQuery";
+        routerConfig.jsCancelFunction = "cancelIpcQuery";
+        CefMessageRouter ipcRouter = CefMessageRouter.create(routerConfig);
+        ipcRouter.addHandler(this.ipcHandler = new TopicMessageHandler(), true);
+        client.addMessageRouter(ipcRouter);
+        this.ipcTopics = new IpcTopics(this, this.ipcHandler);
+        this.setupIpcCommunication();
 
-            this.cefApp = CefFrame.getApp();
-            CefApp.CefVersion version = cefApp.getVersion();
-            Launcher.log.info("JCef Version: {}", version.getJcefVersion());
-            Launcher.log.info("Cef Version: {}", version.getCefVersion());
-            Launcher.log.info("Chrome Version: {}", version.getChromeVersion());
+        this.cefBrowser = client.createBrowser(Launcher.development ? "http://127.0.0.1:8080" : "launcher://launcher/", OS.isLinux(), false);
 
-            CefClient client = this.cefApp.createClient();
-            client.addRequestHandler(new SeqRequestHandler(new BlockExternalRequestHandler(), new AuthRequestHandler(uuid)));
-            client.addContextMenuHandler(new LauncherContextMenuHandler(Launcher.development));
+        this.window = new CefFrame(this.cefBrowser);
+        this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.window.setTitle("MyFTB Launcher v" + this.getVersion());
+        this.window.setSize(960, 576);
+        this.window.setMinimumSize(this.window.getSize());
+        this.window.setVisible(true);
 
-            CefMessageRouter.CefMessageRouterConfig routerConfig = new CefMessageRouter.CefMessageRouterConfig();
-            routerConfig.jsQueryFunction = "ipcQuery";
-            routerConfig.jsCancelFunction = "cancelIpcQuery";
-            CefMessageRouter ipcRouter = CefMessageRouter.create(routerConfig);
-            ipcRouter.addHandler(this.ipcHandler = new TopicMessageHandler(), true);
-            client.addMessageRouter(ipcRouter);
-            this.ipcTopics = new IpcTopics(this, this.ipcHandler);
-            this.setupIpcCommunication();
+        this.discordIntegration = new DiscordIntegration();
+        this.discordIntegration.setup();
 
-            this.cefBrowser = client.createBrowser("http://127.0.0.1:" + (Launcher.development ? 8080 : this.webServer.port()),
-                    OS.isLinux(), false);
-
-            this.window = new CefFrame(this.cefBrowser);
-            this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            this.window.setTitle("MyFTB Launcher v" + this.getVersion());
-            this.window.setSize(960, 576);
-            this.window.setMinimumSize(this.window.getSize());
-            this.window.setVisible(true);
-
-            this.discordIntegration = new DiscordIntegration();
-            this.discordIntegration.setup();
-        } catch (Exception e) {
-            if (this.webServer != null) {
-                this.webServer.stop();
+        if (this.config.isAllowWebstart()) {
+            try {
+                this.webstartHandler = new ModpackWebstart();
+                this.webstartHandler.start();
+            } catch (Exception e) {
+                Launcher.log.warn("Fehler beim Aktivieren von Webstart Handler", e);
             }
-            throw new RuntimeException(e);
         }
     }
 
@@ -299,11 +264,26 @@ public class Launcher {
         return this.discordIntegration;
     }
 
+    public void bringToFront() {
+        SwingUtilities.invokeLater(() -> {
+            this.window.setExtendedState(this.window.getState() & ~JFrame.ICONIFIED & JFrame.NORMAL);
+            this.window.setAlwaysOnTop(true);
+            this.window.toFront();
+            this.window.requestFocus();
+            this.window.repaint();
+            this.window.setAlwaysOnTop(false);
+        });
+    }
+
+    public TopicMessageHandler getIpcHandler() {
+        return this.ipcHandler;
+    }
+
     public String getVersion() {
         return "@version@";
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         if ("dev".equals(System.getProperty("environment", "production"))) {
             Launcher.development = true;
         }

@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -183,10 +184,11 @@ public class LaunchMinecraft {
         MinecraftVersionManifest minecraftManifest = ManifestHelper.getManifest(modpackManifest.getGameVersion());
         File instanceDir = modpackManifest.getInstanceDir();
 
-        if (!Launcher.getInstance().getRemotePacks().getPackByName(modpackManifest.getName())
-                .map(ModpackManifestList.ModpackManifestReference::getVersion).orElse(modpackManifest.getVersion())
+        Optional<ModpackManifestList.ModpackManifestReference> remoteReference = Launcher.getInstance().getRemotePacks()
+                .getPackByName(modpackManifest.getName());
+        if (!remoteReference.map(ModpackManifestList.ModpackManifestReference::getVersion).orElse(modpackManifest.getVersion())
                 .equals(modpackManifest.getVersion())) {
-
+            throw new ModpackOutdatedException(remoteReference.get());
         }
 
         AssetIndex assetIndex = LaunchHelper.mapper.readValue(new File(Launcher.getInstance().getSaveSubDirectory("assets/indexes"),
@@ -273,6 +275,8 @@ public class LaunchMinecraft {
         classpath.add(new File(Launcher.getInstance().getSaveSubDirectory("versions"),
                 minecraftManifest.getId() + ".jar").getAbsolutePath());
 
+        LaunchMinecraft.log.info("Classpath: " + String.join("\n", classpath));
+
         Map<String, String> tokens = new HashMap<>();
         tokens.put("auth_player_name", userAuthentication.getSelectedProfile().getName());
         tokens.put("auth_uuid", userAuthentication.getSelectedProfile().getId().toString());
@@ -324,6 +328,9 @@ public class LaunchMinecraft {
             });
             minecraftProcess.waitFor();
         } finally {
+            LaunchMinecraft.log.info("Minecraft Prozess beendet");
+            LaunchMinecraft.instanceLog.forEach(System.out::print);
+
             Launcher.getInstance().getDiscordIntegration().setRunningModpack(null);
             LaunchMinecraft.running = false;
 
@@ -340,6 +347,18 @@ public class LaunchMinecraft {
     @FunctionalInterface
     public interface InstallationStatusListener {
         void progressChange(int total, int finished, int failed);
+    }
+
+    public static class ModpackOutdatedException extends RuntimeException {
+        private final ModpackManifestList.ModpackManifestReference modpack;
+
+        private ModpackOutdatedException(ModpackManifestList.ModpackManifestReference modpack) {
+            this.modpack = modpack;
+        }
+
+        public ModpackManifestList.ModpackManifestReference getModpack() {
+            return this.modpack;
+        }
     }
 
 }

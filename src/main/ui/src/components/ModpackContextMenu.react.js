@@ -41,6 +41,7 @@ export default class ModpackContextMenu extends React.Component {
                 if (err) {
                     return window.launcher.showDialog(true, <p>{err}</p>);
                 }
+                //TODO Installierte Packs aktualisieren
             });
         }
     }

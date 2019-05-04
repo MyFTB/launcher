@@ -59,6 +59,8 @@ public class LauncherConfig {
 
     @Expose private UserAuthentication profile = null;
 
+    @Expose private boolean allowWebstart = true;
+
     public String getClientToken() {
         return this.clientToken;
     }
@@ -129,6 +131,14 @@ public class LauncherConfig {
 
     public UserAuthentication getProfile() {
         return this.profile;
+    }
+
+    public boolean isAllowWebstart() {
+        return this.allowWebstart;
+    }
+
+    public void setAllowWebstart(boolean allowWebstart) {
+        this.allowWebstart = allowWebstart;
     }
 
     public AuthenticationService getAuthenticationService() {

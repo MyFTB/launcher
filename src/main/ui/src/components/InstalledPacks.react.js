@@ -39,7 +39,7 @@ export default class InstalledPacks extends React.Component {
     }
 
     onModpackClick(index) {
-        window.launcher.launchModpack(this.state.packages[index].name);
+        window.launcher.launchModpack(this.state.packages[index]);
     }
 
     render() {

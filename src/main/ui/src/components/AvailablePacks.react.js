@@ -19,42 +19,16 @@
 import React from 'react';
 
 import Modpack from './base/Modpack.react';
-import ProgressBar from './base/ProgressBar.react';
 
 export default class AvailablePacks extends React.Component {
 
     constructor(props) {
         super(props);
-        this.acceptDialog = this.acceptDialog.bind(this);
-        this.closeDialog = this.closeDialog.bind(this);
         this.state = { 
-            packages: false, dialog: false, status: false, 
-            features: false, featuresFor: false, 
-            changeToInstalled: false 
+            packages: false, dialog: false, changeToInstalled: false 
         };
-    }
 
-    acceptDialog() {
-        if (this.state.features) {
-            let features = [];
-            let featureChecks = document.querySelectorAll('.feature-dialog input[type=checkbox]');
-            for (let i = 0; i < featureChecks.length; i++) {
-                if (featureChecks[i].checked) {
-                    features.push(featureChecks[i].getAttribute('data-feature'));
-                }
-            }
-            this.installPack(this.state.featuresFor, features);
-            this.setState({features: false, featuresFor: false});
-        } else if (this.state.changeToInstalled) {
-            window.launcher.resetDialog();
-            this.props.history.push('/modpacks');
-        } else {
-            window.launcher.resetDialog();
-        }
-    }
-
-    closeDialog() {
-        this.setState({features: false, featuresFor: false});
+        this.acceptInstallationDialog = this.acceptInstallationDialog.bind(this);
     }
 
     componentDidMount() {
@@ -72,6 +46,14 @@ export default class AvailablePacks extends React.Component {
         this.installPack(index);
     }
 
+    acceptInstallationDialog() {
+        window.launcher.resetDialog();
+
+        if (this.state.changeToInstalled) {   
+            this.props.history.push('/modpacks');
+        }
+    }
+
     installPack(index, features) {
         let pack = {};
         Object.assign(pack, this.state.packages[index]);
@@ -80,25 +62,19 @@ export default class AvailablePacks extends React.Component {
         }
 
         window.launcher.loading(true);
-        window.launcher.sendIpc('install_modpack', pack, (err, data) => {
-            window.launcher.loading(false);
-            if (err) {
-                return window.launcher.showDialog(true, <p>{err}</p>);
-            }
-
-            if (data.features) {
-                this.setState({ featuresFor: index, features: JSON.parse(data.features) });
-            } else if (data.installing) {
-                this.setState({ status: { progress: data.installing, pack: this.state.packages[index] } });
+        window.launcher.sendIpc('install_modpack', pack, window.launcher.generalFeatureCallback('install_modpack', data => {
+            if (data.installing) {
+                window.launcher.setState({installationStatus: {progress: data.installing, pack: this.state.packages[index]}});
             } else if (data.installed) {
                 let success = data.success;
-                this.setState({ status: false, changeToInstalled: success });
+                window.launcher.setState({installationStatus: false});
+                this.setState({status: false, changeToInstalled: success});
                 window.launcher.showDialog(false, [
                     <p>{success ? 'Das Modpack ' + this.state.packages[index].title + ' wurde erfolgreich installiert' : 'Bei der Installation von ' + this.state.packages[index].title + ' sind Fehler aufgetreten'}</p>,
-                    <button className="btn" onClick={this.acceptDialog}>OK</button>
+                    <button className="btn" onClick={this.acceptInstallationDialog}>OK</button>
                 ]);
             }
-        });
+        }));
     }
 
     render() {
@@ -111,41 +87,6 @@ export default class AvailablePacks extends React.Component {
                         })
                     )}
                 </div>
-
-                {this.state.status && (
-                    <div className="overlayed-dark">
-                        <div className="dialog">
-                            <h3>Installiere Modpack: {this.state.status.pack.title}</h3>
-                            <p>{this.state.status.progress.total} Aufgaben gesamt, {this.state.status.progress.finished} abgeschlossen, {this.state.status.progress.failed} fehlgeschlagen</p>
-                            <ProgressBar data-progress={Math.round(this.state.status.progress.finished / this.state.status.progress.total * 100)}></ProgressBar>
-                        </div>
-                    </div>
-                )}
-
-                {this.state.features && (
-                    <div className="overlayed-dark">
-                        <div className="dialog feature-dialog">
-                            <h3>Optionale Features</h3>
-                            <p>Wähle optionale Features aus der unten aufgeführten Liste aus, welche zusätzlich installiert werden sollen</p>
-                            {this.state.features.map((feature, i) => {
-                                return (
-                                    <div key={i} className="feature">
-                                        <b>
-                                            <label className="toggle">
-                                                <input type="checkbox" data-feature={feature.name}></input>
-                                                <span></span>
-                                            </label>
-                                            {feature.name}
-                                        </b>
-                                        <p>{feature.description}</p>
-                                    </div>
-                                )
-                            })}
-                            <button className="btn" onClick={this.acceptDialog}>OK</button>
-                            <button className="btn" onClick={this.closeDialog}>Abbrechen</button>
-                        </div>
-                    </div>
-                )}
             </div>
         )
     }

@@ -173,9 +173,8 @@ public class IpcTopics {
             ModpackManifestList.ModpackManifestReference reference = new Gson().fromJson(data, ModpackManifestList.ModpackManifestReference.class);
             ModpackManifest manifest = ManifestHelper.getManifest(reference);
             if ((manifest.getFeatures() != null && !manifest.getFeatures().isEmpty()) && !data.has("selected_features")) {
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("features", LaunchHelper.mapper.writeValueAsString(manifest.getFeatures()));
-                callback.success(jsonObject);
+                data.addProperty("features", LaunchHelper.mapper.writeValueAsString(manifest.getFeatures()));
+                callback.success(data);
             } else {
                 List<String> selectedFeatures = (manifest.getFeatures() == null || manifest.getFeatures().isEmpty())
                         ? Collections.emptyList()
@@ -225,6 +224,45 @@ public class IpcTopics {
             JsonObject closed = new JsonObject();
             closed.addProperty("closed", true);
             callback.success(closed);
+        } catch (LaunchMinecraft.ModpackOutdatedException outdatedEx) {
+            try {
+                ModpackManifest manifest = ManifestHelper.getManifest(outdatedEx.getModpack());
+
+                if ((manifest.getFeatures() != null && !manifest.getFeatures().isEmpty()) && !data.has("selected_features")) {
+                    data.addProperty("features", LaunchHelper.mapper.writeValueAsString(manifest.getFeatures()));
+                    callback.success(data);
+                } else {
+                    List<String> selectedFeatures = (manifest.getFeatures() == null || manifest.getFeatures().isEmpty())
+                            ? Collections.emptyList()
+                            : StreamSupport.stream(data.getAsJsonArray("selected_features").spliterator(), false)
+                            .map(JsonElement::getAsString)
+                            .collect(Collectors.toList());
+                    IpcTopics.log.info("Installiere " + manifest.getTitle() + " mit Features: " + selectedFeatures);
+
+                    boolean success = LaunchMinecraft.install(manifest, selectedFeatures, (total, finished, failed) -> {
+                        JsonObject jsonObject = new JsonObject();
+                        JsonObject status = new JsonObject();
+                        status.addProperty("total", total);
+                        status.addProperty("finished", finished);
+                        status.addProperty("failed", failed);
+                        jsonObject.add("installing", status);
+                        callback.success(jsonObject);
+                    });
+
+                    JsonObject jsonObject = new JsonObject();
+                    jsonObject.addProperty("installed", true);
+                    callback.success(jsonObject);
+
+                    if (success) {
+                        this.onLaunchModpack(data, callback);
+                    } else {
+                        callback.failure("Das Modpack konnte nicht aktualisiert werden");
+                    }
+                }
+            } catch (IOException e) {
+                callback.failure("Das Modpack konnte nicht aktualisiert werden");
+                IpcTopics.log.warn("Das Modpack " + modpack.get().getName() + " konnte nicht gestartet werden", e);
+            }
         } catch (IllegalStateException e) {
             callback.failure(e.getLocalizedMessage());
         } catch (IOException | InterruptedException e) {
@@ -267,6 +305,7 @@ public class IpcTopics {
                 callback.failure("Das Modpack " + modpack.get().getName() + " konnte nicht gelöscht werden");
             }
         } else if (index == 3) { // Aktualisieren
+            //TODO
         } else if (index == 4) { // Crashreport
             File crashReportsDir = new File(modpack.get().getInstanceDir(), "crash-reports");
             if (!crashReportsDir.isDirectory() || crashReportsDir.listFiles().length == 0) {
@@ -292,7 +331,7 @@ public class IpcTopics {
                         }
                     });
         } else if (index == 5) { // Desktop-Verknüpfung
-
+            //TODO
         }
     }
 

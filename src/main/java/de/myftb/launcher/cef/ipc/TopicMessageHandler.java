@@ -92,6 +92,10 @@ public class TopicMessageHandler extends CefMessageRouterHandlerAdapter {
         }
     }
 
+    public void sendString(String topic, String message) {
+        SwingUtilities.invokeLater(() -> this.topicCallbacks.get(topic).success(message));
+    }
+
     public static class JsonQueryCallback {
         private final CefQueryCallback callback;
 
