@@ -20,7 +20,7 @@ import React from 'react';
 
 import Modpack from './base/Modpack.react';
 
-export default class AvailablePacks extends React.Component {
+export default class InstalledPacks extends React.Component {
 
     constructor(props) {
         super(props);

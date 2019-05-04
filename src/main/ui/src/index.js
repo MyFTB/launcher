@@ -24,7 +24,7 @@ import Launcher from './Launcher';
 
 import './index.html';
 import './styles/app.scss';
-import './fonts/lato.ttf';
+import './fonts/Lato-Regular.woff2';
 
 import Sidebar from './components/Sidebar.react';
 import Main from './components/Main.react';
@@ -33,11 +33,6 @@ import Settings from './components/Settings.react';
 import AvailablePacks from './components/AvailablePacks.react';
 import InstalledPacks from './components/InstalledPacks.react';
 import ModpackContextMenu from './components/ModpackContextMenu.react';
-
-document.addEventListener('click', () => {
-    let contextMenu = document.getElementsByClassName('contextmenu')[0];
-    contextMenu.style.display = 'none';
-});
 
 ReactDOM.render(
     <Router>

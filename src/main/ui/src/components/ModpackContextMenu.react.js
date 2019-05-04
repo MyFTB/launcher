@@ -24,6 +24,13 @@ export default class ModpackContextMenu extends React.Component {
         super(props);
     }
 
+    componentDidMount() {
+        document.addEventListener('click', () => {
+            let contextMenu = document.getElementsByClassName('contextmenu')[0];
+            contextMenu.style.display = 'none';
+        });
+    }
+
     onEntryClick(index) {
         if (index == 0) {
             window.contextmenu_modpack.props.onClick();

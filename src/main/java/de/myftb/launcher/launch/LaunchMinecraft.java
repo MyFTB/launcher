@@ -69,6 +69,9 @@ public class LaunchMinecraft {
                 return thread;
             });
 
+    private static final LinkedList<String> instanceLog = new LinkedList<>();
+    private static final int maxLogLines = 10000;
+
     private static List<Library> getAdditionalLibraries(ModpackManifest modpackManifest, MinecraftVersionManifest minecraftManifest) {
         return Collections.emptyList();
     }
@@ -313,10 +316,18 @@ public class LaunchMinecraft {
             Launcher.getInstance().getDiscordIntegration().setRunningModpack(modpackManifest);
             LaunchMinecraft.running = true;
             Process minecraftProcess = builder.start();
+            ProcessLogConsumer.attach(minecraftProcess, data -> {
+                LaunchMinecraft.instanceLog.add(data);
+                if (LaunchMinecraft.instanceLog.size() > LaunchMinecraft.maxLogLines) {
+                    LaunchMinecraft.instanceLog.removeFirst();
+                }
+            });
             minecraftProcess.waitFor();
         } finally {
             Launcher.getInstance().getDiscordIntegration().setRunningModpack(null);
             LaunchMinecraft.running = false;
+
+            LaunchMinecraft.instanceLog.clear();
 
             LaunchMinecraft.log.trace("Lösche entpackte Natives");
             Files.walk(nativesDir.toPath())
