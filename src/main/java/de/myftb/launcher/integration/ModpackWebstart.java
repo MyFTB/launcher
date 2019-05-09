@@ -109,7 +109,7 @@ public class ModpackWebstart extends WebSocketServer {
                 }
 
                 Launcher.getInstance().bringToFront();
-                Launcher.getInstance().getIpcHandler().sendString("on_webstart", LaunchHelper.mapper.writeValueAsString(pack.get()));
+                Launcher.getInstance().getIpcHandler().sendString("launch_pack", LaunchHelper.mapper.writeValueAsString(pack.get()));
             }
         } catch (Exception e) {
             ModpackWebstart.log.warn("Fehler in Websocket-Handler", e);

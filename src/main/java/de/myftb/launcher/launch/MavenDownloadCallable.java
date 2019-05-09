@@ -56,7 +56,9 @@ public class MavenDownloadCallable extends DownloadCallable {
             try {
                 return this.tryRepository(repository, path);
             } catch (IOException e) {
-                // Exceptions können hier auftreten, kann man ignorieren.
+                if (!(e instanceof HttpResponseException) || ((HttpResponseException) e).getStatusCode() != 404) {
+                    MavenDownloadCallable.log.warn("Fehler beim Herunterladen von Maven-Artefakt: " + this.downloadable.url, e);
+                }
             }
         }
 

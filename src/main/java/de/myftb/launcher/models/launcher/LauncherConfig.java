@@ -27,6 +27,9 @@ import com.mojang.authlib.UserAuthentication;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.sun.management.OperatingSystemMXBean;
 
+import de.myftb.launcher.launch.ManifestHelper;
+import de.myftb.launcher.models.modpacks.ModpackManifest;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -35,7 +38,10 @@ import java.lang.management.ManagementFactory;
 import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class LauncherConfig {
 
@@ -56,73 +62,40 @@ public class LauncherConfig {
 
     @Expose private String packKey = "";
     @Expose private String installationDir = "";
-
     @Expose private UserAuthentication profile = null;
-
     @Expose private boolean allowWebstart = true;
+    @Expose private List<String> lastPlayedPacks = new LinkedList<>();
 
     public String getClientToken() {
         return this.clientToken;
-    }
-
-    public void setClientToken(String clientToken) {
-        this.clientToken = clientToken;
     }
 
     public String getJvmArgs() {
         return this.jvmArgs;
     }
 
-    public void setJvmArgs(String jvmArgs) {
-        this.jvmArgs = jvmArgs;
-    }
-
     public int getMinMemory() {
         return this.minMemory;
-    }
-
-    public void setMinMemory(int minMemory) {
-        this.minMemory = minMemory;
     }
 
     public int getMaxMemory() {
         return this.maxMemory;
     }
 
-    public void setMaxMemory(int maxMemory) {
-        this.maxMemory = maxMemory;
-    }
-
     public int getGameWidth() {
         return this.gameWidth;
-    }
-
-    public void setGameWidth(int gameWidth) {
-        this.gameWidth = gameWidth;
     }
 
     public int getGameHeight() {
         return this.gameHeight;
     }
 
-    public void setGameHeight(int gameHeight) {
-        this.gameHeight = gameHeight;
-    }
-
     public String getPackKey() {
         return this.packKey;
     }
 
-    public void setPackKey(String packKey) {
-        this.packKey = packKey;
-    }
-
     public String getInstallationDir() {
         return this.installationDir;
-    }
-
-    public void setInstallationDir(String installationDir) {
-        this.installationDir = installationDir;
     }
 
     public void setProfile(UserAuthentication profile) {
@@ -137,13 +110,30 @@ public class LauncherConfig {
         return this.allowWebstart;
     }
 
-    public void setAllowWebstart(boolean allowWebstart) {
-        this.allowWebstart = allowWebstart;
+    public List<String> getLastPlayedPacks() {
+        List<String> installed = ManifestHelper.getInstalledModpacks().stream().map(ModpackManifest::getName).collect(Collectors.toList());
+        for (String pack : this.lastPlayedPacks) {
+            if (!installed.contains(pack)) {
+                this.lastPlayedPacks.remove(pack);
+            }
+        }
+
+        return this.lastPlayedPacks;
+    }
+
+    public void addLastPlayedPack(String name) {
+        this.lastPlayedPacks = new LinkedList<>(this.lastPlayedPacks);
+        this.lastPlayedPacks.add(name);
+        if (this.lastPlayedPacks.size() > 3) {
+            ((LinkedList<String>) this.lastPlayedPacks).removeFirst();
+        }
     }
 
     public AuthenticationService getAuthenticationService() {
         return new YggdrasilAuthenticationService(Proxy.NO_PROXY, this.getClientToken());
     }
+
+    /* ======================================== Serialisierung ======================================== */
 
     public void save(File dir) throws IOException {
         File configFile = new File(dir, "config.json");

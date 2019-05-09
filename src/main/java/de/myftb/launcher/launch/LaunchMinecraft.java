@@ -321,7 +321,7 @@ public class LaunchMinecraft {
             LaunchMinecraft.running = true;
             Process minecraftProcess = builder.start();
             ProcessLogConsumer.attach(minecraftProcess, data -> {
-                LaunchMinecraft.instanceLog.add(data);
+                LaunchMinecraft.instanceLog.add(data.trim());
                 if (LaunchMinecraft.instanceLog.size() > LaunchMinecraft.maxLogLines) {
                     LaunchMinecraft.instanceLog.removeFirst();
                 }
@@ -329,7 +329,6 @@ public class LaunchMinecraft {
             minecraftProcess.waitFor();
         } finally {
             LaunchMinecraft.log.info("Minecraft Prozess beendet");
-            LaunchMinecraft.instanceLog.forEach(System.out::print);
 
             Launcher.getInstance().getDiscordIntegration().setRunningModpack(null);
             LaunchMinecraft.running = false;

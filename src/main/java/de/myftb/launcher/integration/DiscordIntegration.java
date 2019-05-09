@@ -70,7 +70,7 @@ public class DiscordIntegration extends TimerTask {
                 presence.details = "Im Launcher";
                 presence.largeImageKey = "myftb";
             } else {
-                presence.details = "Spielt " + this.runningModpack.getName();
+                presence.details = "Spielt " + this.runningModpack.getTitle();
                 presence.largeImageKey = "myftb";
 
                 presence.partySize = 1;

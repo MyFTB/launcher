@@ -137,12 +137,20 @@ $sidebarWidth: $iconSize + 180px;
             }
 
             &:not(:last-child) {
-                
                 &:after {
                     content: ' | ';
                 }
             }
         }
+    }
+
+    .bottom {
+        position: absolute;
+        bottom: 30px;
+        width: 100%;
+        max-width: 1050px;
+        left: 50%;
+        transform: translateX(-50%);
     }
 }
 
@@ -155,6 +163,7 @@ $sidebarWidth: $iconSize + 180px;
     background-color: #333;
     color: #eee;
     padding: 20px;
+    box-shadow: 0 2px 4px 0 rgba(0,0,0,.2);
 
     .btn {
         box-sizing: border-box;

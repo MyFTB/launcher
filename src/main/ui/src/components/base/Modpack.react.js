@@ -57,6 +57,12 @@ export default class Modpack extends React.Component {
             } else {
                 contextMenu.style.left = e.pageX + 'px';
             }
+
+            if ((e.pageY + contextMenu.clientHeight) > document.body.clientHeight) {
+                contextMenu.style.top = (e.pageY - contextMenu.clientHeight) + 'px';
+            } else {
+                contextMenu.style.top = e.pageY + 'px';
+            }
         }
     }
 

@@ -19,16 +19,24 @@
 import React from 'react';
 
 import ExternalLink from './base/ExternalLink.react';
+import Modpack from './base/Modpack.react';
 
 export default class Main extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {username: false};
+        this.state = {username: false, packages: false};
     }
 
     componentDidMount() {
         window.launcher.registerLoginRerender(this);
+
+        window.launcher.sendIpc('request_recent_packs', false, (err, data) => {
+            if (err) {
+                return window.launcher.showDialog(true, <p>{err}</p>);
+            }
+            this.setState({ packages: JSON.parse(data.packages).sort((a, b) => a.title.localeCompare(b.title)) });
+        });
     }
 
     componentWillUnmount() {
@@ -39,12 +47,17 @@ export default class Main extends React.Component {
         this.setState({username: profile.name});
     }
 
+    onModpackClick(index) {
+        window.launcher.launchModpack(this.state.packages[index]);
+    }
+
     render() {
         return (
             <div className="main-page">
                 <h2>Willkommen{this.state.username && ' ' + this.state.username}!</h2>
                 <ul>
                     <li><ExternalLink data-link="https://myftb.de">Webseite</ExternalLink></li>
+                    <li><ExternalLink data-link="https://discord.myftb.de">Discord</ExternalLink></li>
                     <li><ExternalLink data-link="https://forum.myftb.de">Forum</ExternalLink></li>
                     <li><ExternalLink data-link="https://torch.myftb.de">Torch</ExternalLink></li>
                 </ul>
@@ -54,6 +67,16 @@ export default class Main extends React.Component {
 
                 <h3>Wähle ein Modpack</h3>
                 <p>Bereits installierte Modpacks kannst du im linken Menü unter <b>Installierte Modpacks</b> starten. Suchst du ein neues Modpack kannst du dies über den Menüpunkt <b>Verfügbare Modpacks</b> installieren</p>
+
+                <div className="bottom">
+                    <div className="packs recent">
+                        {this.state.packages && (
+                            this.state.packages.map((pack, i) => {
+                                return <Modpack key={i} pack={pack} packinstalled="true" onClick={this.onModpackClick.bind(this, i)}></Modpack>
+                            })
+                        )}
+                    </div>
+                </div>
             </div>
         )
     }

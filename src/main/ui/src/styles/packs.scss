@@ -45,9 +45,6 @@
         > p {
             z-index: 10;
             display: none;
-            &:first-of-type {
-                margin-bottom: 10px;
-            }
         }
 
         > .blackout {
@@ -69,6 +66,19 @@
             }
             > .blackout {
                 opacity: 1;
+            }
+        }
+    }
+
+    &.recent {
+        justify-content: space-evenly;
+
+        .pack {
+            width: 150px;
+            height: 150px;
+
+            > p {
+                font-size: 12px;
             }
         }
     }

@@ -28,6 +28,8 @@ dependencies {
 	compile group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.5.8'
 	compile group: 'club.minnced', name: 'java-discord-rpc', version: '2.0.2'
 	compile group: 'org.java-websocket', name: 'Java-WebSocket', version: '1.4.0'
+	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '5.0.4'
+	compile group: 'com.github.vatbub', name: 'mslinks', version: '1.0.5'
 
 	shadow files('run/jcef/jcef.jar')
 }

@@ -58,6 +58,10 @@ export default class Launcher extends React.Component {
             this.setState({loginForm: true, loginFormPrefill: data.username});
         });
 
+        this.listenIpc('launch_pack', (err, data) => {
+            this.launchModpack(data);
+        });
+
         this.sendIpc('renderer_arrived', false, (err, data) => {
             if (err) {
                 throw err;
@@ -66,10 +70,6 @@ export default class Launcher extends React.Component {
             if (data.login_needed) {
                 this.setState({loginForm: true, loginFormPrefill: data.login_username});
             }
-        });
-
-        this.listenIpc('on_webstart', (err, data) => {
-            this.launchModpack(data);
         });
     }
 

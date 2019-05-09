@@ -31,9 +31,28 @@ export default class ModpackContextMenu extends React.Component {
         });
     }
 
+    installPack() {
+        let pack = window.contextmenu_modpack.props.pack;
+        window.launcher.loading(true);
+        window.launcher.sendIpc('install_modpack', pack, window.launcher.generalFeatureCallback('install_modpack', data => {
+            if (data.installing) {
+                window.launcher.setState({installationStatus: {progress: data.installing, pack: pack}});
+            } else if (data.installed) {
+                let success = data.success;
+                window.launcher.setState({installationStatus: false});
+                this.setState({status: false, changeToInstalled: success});
+                window.launcher.showDialog(true,
+                    <p>{success ? 'Das Modpack ' + pack.title + ' wurde erfolgreich installiert' : 'Bei der Installation von ' + pack.title + ' sind Fehler aufgetreten'}</p>
+                );
+            }
+        }));
+    }
+
     onEntryClick(index) {
-        if (index == 0) {
+        if (index === 0) {
             window.contextmenu_modpack.props.onClick();
+        } else if (index === 3) {
+            this.installPack();
         } else {
             window.launcher.loading(true);
             window.launcher.sendIpc('modpack_menu_click', {pack: window.contextmenu_modpack.props.pack.name, index: index}, (err, data) => {
@@ -41,7 +60,7 @@ export default class ModpackContextMenu extends React.Component {
                 if (err) {
                     return window.launcher.showDialog(true, <p>{err}</p>);
                 }
-                //TODO Installierte Packs aktualisieren
+                window.installed_packs.componentDidMount()
             });
         }
     }

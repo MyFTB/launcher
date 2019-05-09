@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +65,7 @@ public class ManifestHelper {
         return manifest;
     }
 
-    public static ModpackManifest getManifest(ModpackManifestList.ModpackManifestReference reference) throws IOException {
+    public static ModpackManifest getManifestByReference(ModpackManifestList.ModpackManifestReference reference) throws IOException {
         if (ManifestHelper.modpackManifestCache.containsKey(reference.getLocation())) {
             return ManifestHelper.modpackManifestCache.get(reference.getLocation());
         }
@@ -76,6 +77,15 @@ public class ManifestHelper {
 
         ManifestHelper.modpackManifestCache.put(reference.getLocation(), manifest);
         return manifest;
+    }
+
+    public static ModpackManifest getManifestByName(String name) throws IOException {
+        Optional<ModpackManifestList.ModpackManifestReference> reference = Launcher.getInstance().getRemotePacks().getPackByName(name);
+        if (reference.isPresent()) {
+            return ManifestHelper.getManifestByReference(reference.get());
+        }
+
+        return null;
     }
 
     public static List<ModpackManifest> getInstalledModpacks() {

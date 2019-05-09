@@ -27,6 +27,7 @@ import de.myftb.launcher.cef.gui.CefFrame;
 import de.myftb.launcher.cef.ipc.TopicMessageHandler;
 import de.myftb.launcher.integration.DiscordIntegration;
 import de.myftb.launcher.integration.ModpackWebstart;
+import de.myftb.launcher.launch.LaunchHelper;
 import de.myftb.launcher.launch.LaunchMinecraft;
 import de.myftb.launcher.launch.ManifestHelper;
 import de.myftb.launcher.models.launcher.LauncherConfig;
@@ -36,6 +37,7 @@ import de.myftb.launcher.models.modpacks.ModpackManifestList;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -48,6 +50,16 @@ import org.cef.browser.CefMessageRouter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
+
+//TODO Bootstrapper Installer
+//TODO Bootstrapper verbessern (Parallel; GZip)
+
+//TODO Ingame Helper Mod (+Discord)
+//TODO Logfenster
+//TODO Fensterbreite nicht korrekt
 public class Launcher {
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
     private static boolean development = false;
@@ -62,8 +74,15 @@ public class Launcher {
     private ModpackWebstart webstartHandler;
     private LauncherConfig config;
     private ModpackManifestList modpackList;
+    private String launchPack;
 
-    public Launcher() throws Exception {
+    public Launcher(String[] args) throws Exception {
+        OptionParser optionParser = new OptionParser();
+        OptionSpec<String> launchingPack = optionParser.acceptsAll(Arrays.asList("pack", "p"), "Startet das angegebene Modpack")
+                .withRequiredArg();
+        OptionSet optionSet = optionParser.parse(args);
+        this.launchPack = optionSet.valueOf(launchingPack);
+
         this.config = new LauncherConfig();
         this.config = this.config.readConfig(this.getExecutableDirectory()); // Workaround damit Profile korrekt gelesen werden.
         this.config = this.config.readConfig(this.getExecutableDirectory()); // Zukünftig vielleicht einen Custom (De)Serializer?
@@ -119,6 +138,7 @@ public class Launcher {
         this.ipcHandler.listenAsync("open_directory_browser", this.ipcTopics::onOpenDirectoryBrowser);
         this.ipcHandler.listenAsync("request_installable_modpacks", this.ipcTopics::onRequestInstallableModpacks);
         this.ipcHandler.listenAsync("request_installed_modpacks", this.ipcTopics::onRequestInstalledModpacks);
+        this.ipcHandler.listenAsync("request_recent_packs", this.ipcTopics::onRequestRecentPacks);
         this.ipcHandler.listenAsync("install_modpack", this.ipcTopics::onInstallModpack);
         this.ipcHandler.listenAsync("launch_modpack", this.ipcTopics::onLaunchModpack);
         this.ipcHandler.listenAsync("modpack_menu_click", this.ipcTopics::onModpackContextMenuClick);
@@ -137,6 +157,19 @@ public class Launcher {
         this.saveConfig();
         Launcher.log.info("Minecraft Account angemeldet: " + this.config.getProfile().getSelectedProfile());
         this.ipcHandler.send("logged_in", this.config.getProfile().getSelectedProfile());
+
+        if (this.launchPack != null) {
+            String pack = this.launchPack;
+            this.launchPack = null;
+            try {
+                ModpackManifestList.ModpackManifestReference reference = this.getRemotePacks().getPackByName(pack).orElse(null);
+                if (reference != null) {
+                    this.ipcHandler.sendString("launch_pack", LaunchHelper.mapper.writeValueAsString(reference));
+                }
+            } catch (IOException e) {
+                Launcher.log.warn("Fehler beim Starten von Modpack", e);
+            }
+        }
     }
 
     /**
@@ -245,6 +278,8 @@ public class Launcher {
         }
 
         launchingCallback.run();
+        this.config.addLastPlayedPack(manifest.getName());
+        this.saveConfig();
         LaunchMinecraft.launch(manifest, this.config.getProfile());
     }
 
@@ -252,6 +287,13 @@ public class Launcher {
         return this.config;
     }
 
+    /**
+     * Ruft die aktuellen Modpacks von {@link Constants#packList} ab.
+     * Die Liste wird gecached beim ersten Abruf.
+     *
+     * @return Modpackliste
+     * @throws IOException
+     */
     public ModpackManifestList getRemotePacks() throws IOException {
         if (this.modpackList == null) {
             this.modpackList = ManifestHelper.getManifests();
@@ -264,6 +306,9 @@ public class Launcher {
         return this.discordIntegration;
     }
 
+    /**
+     * Bringt das Hauptfenster in den Vordergrund.
+     */
     public void bringToFront() {
         SwingUtilities.invokeLater(() -> {
             this.window.setExtendedState(this.window.getState() & ~JFrame.ICONIFIED & JFrame.NORMAL);
@@ -288,7 +333,7 @@ public class Launcher {
             Launcher.development = true;
         }
 
-        Launcher.instance = new Launcher();
+        Launcher.instance = new Launcher(args);
     }
 
     public static Launcher getInstance() {

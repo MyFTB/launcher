@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -168,36 +169,63 @@ public class IpcTopics {
         }
     }
 
+    void onRequestRecentPacks(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        try {
+            JsonObject jsonObject = new JsonObject();
+            List<ModpackManifest> installedPacks = ManifestHelper.getInstalledModpacks();
+            List<ModpackManifest> recentPacks = Launcher.getInstance().getConfig().getLastPlayedPacks().stream()
+                    .sorted(Comparator.reverseOrder())
+                    .map(name -> installedPacks.stream().filter(manifest -> name.equals(manifest.getName())).findFirst().orElse(null))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            jsonObject.addProperty("packages", LaunchHelper.mapper.writeValueAsString(recentPacks));
+            callback.success(jsonObject);
+        } catch (JsonProcessingException e) {
+            callback.failure("Die Modpacks konnten nicht angezeigt werden");
+            IpcTopics.log.warn("Fehler bei der Modpack-Serialisierung", e);
+        }
+    }
+
+    Optional<Boolean> manifestInstallHelper(ModpackManifest manifest, JsonObject data, TopicMessageHandler.JsonQueryCallback callback) throws IOException {
+        if ((manifest.getFeatures() != null && !manifest.getFeatures().isEmpty()) && !data.has("selected_features")) {
+            data.addProperty("features", LaunchHelper.mapper.writeValueAsString(manifest.getFeatures()));
+            callback.success(data);
+        } else {
+            List<String> selectedFeatures = (manifest.getFeatures() == null || manifest.getFeatures().isEmpty())
+                    ? Collections.emptyList()
+                    : StreamSupport.stream(data.getAsJsonArray("selected_features").spliterator(), false)
+                    .map(JsonElement::getAsString)
+                    .collect(Collectors.toList());
+            IpcTopics.log.info("Installiere " + manifest.getTitle() + " mit Features: " + selectedFeatures);
+
+            boolean success = LaunchMinecraft.install(manifest, selectedFeatures, (total, finished, failed) -> {
+                JsonObject jsonObject = new JsonObject();
+                JsonObject status = new JsonObject();
+                status.addProperty("total", total);
+                status.addProperty("finished", finished);
+                status.addProperty("failed", failed);
+                jsonObject.add("installing", status);
+                callback.success(jsonObject);
+            });
+
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("installed", true);
+            jsonObject.addProperty("success", success);
+            callback.success(jsonObject);
+            return Optional.of(success);
+        }
+
+        return Optional.empty();
+    }
+
     void onInstallModpack(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
         try {
             ModpackManifestList.ModpackManifestReference reference = new Gson().fromJson(data, ModpackManifestList.ModpackManifestReference.class);
-            ModpackManifest manifest = ManifestHelper.getManifest(reference);
-            if ((manifest.getFeatures() != null && !manifest.getFeatures().isEmpty()) && !data.has("selected_features")) {
-                data.addProperty("features", LaunchHelper.mapper.writeValueAsString(manifest.getFeatures()));
-                callback.success(data);
-            } else {
-                List<String> selectedFeatures = (manifest.getFeatures() == null || manifest.getFeatures().isEmpty())
-                        ? Collections.emptyList()
-                        : StreamSupport.stream(data.getAsJsonArray("selected_features").spliterator(), false)
-                        .map(JsonElement::getAsString)
-                        .collect(Collectors.toList());
-                IpcTopics.log.info("Installiere " + manifest.getTitle() + " mit Features: " + selectedFeatures);
-
-                boolean success = LaunchMinecraft.install(manifest, selectedFeatures, (total, finished, failed) -> {
-                    JsonObject jsonObject = new JsonObject();
-                    JsonObject status = new JsonObject();
-                    status.addProperty("total", total);
-                    status.addProperty("finished", finished);
-                    status.addProperty("failed", failed);
-                    jsonObject.add("installing", status);
-                    callback.success(jsonObject);
-                });
-
-                JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("installed", true);
-                jsonObject.addProperty("success", success);
-                callback.success(jsonObject);
-            }
+            ModpackManifest manifest = reference.getLocation() == null || reference.getLocation().isEmpty()
+                    ? ManifestHelper.getManifestByName(reference.getName())
+                    : ManifestHelper.getManifestByReference(reference);
+            this.manifestInstallHelper(manifest, data, callback);
         } catch (Exception e) {
             callback.failure("Modpack konnte nicht installiert werden");
             IpcTopics.log.warn("Fehler bei der Modpack-Installation", e);
@@ -226,39 +254,14 @@ public class IpcTopics {
             callback.success(closed);
         } catch (LaunchMinecraft.ModpackOutdatedException outdatedEx) {
             try {
-                ModpackManifest manifest = ManifestHelper.getManifest(outdatedEx.getModpack());
-
-                if ((manifest.getFeatures() != null && !manifest.getFeatures().isEmpty()) && !data.has("selected_features")) {
-                    data.addProperty("features", LaunchHelper.mapper.writeValueAsString(manifest.getFeatures()));
-                    callback.success(data);
-                } else {
-                    List<String> selectedFeatures = (manifest.getFeatures() == null || manifest.getFeatures().isEmpty())
-                            ? Collections.emptyList()
-                            : StreamSupport.stream(data.getAsJsonArray("selected_features").spliterator(), false)
-                            .map(JsonElement::getAsString)
-                            .collect(Collectors.toList());
-                    IpcTopics.log.info("Installiere " + manifest.getTitle() + " mit Features: " + selectedFeatures);
-
-                    boolean success = LaunchMinecraft.install(manifest, selectedFeatures, (total, finished, failed) -> {
-                        JsonObject jsonObject = new JsonObject();
-                        JsonObject status = new JsonObject();
-                        status.addProperty("total", total);
-                        status.addProperty("finished", finished);
-                        status.addProperty("failed", failed);
-                        jsonObject.add("installing", status);
-                        callback.success(jsonObject);
-                    });
-
-                    JsonObject jsonObject = new JsonObject();
-                    jsonObject.addProperty("installed", true);
-                    callback.success(jsonObject);
-
+                ModpackManifest manifest = ManifestHelper.getManifestByReference(outdatedEx.getModpack());
+                this.manifestInstallHelper(manifest, data, callback).ifPresent(success -> {
                     if (success) {
                         this.onLaunchModpack(data, callback);
                     } else {
                         callback.failure("Das Modpack konnte nicht aktualisiert werden");
                     }
-                }
+                });
             } catch (IOException e) {
                 callback.failure("Das Modpack konnte nicht aktualisiert werden");
                 IpcTopics.log.warn("Das Modpack " + modpack.get().getName() + " konnte nicht gestartet werden", e);
@@ -304,8 +307,6 @@ public class IpcTopics {
             } catch (IOException e) {
                 callback.failure("Das Modpack " + modpack.get().getName() + " konnte nicht gelöscht werden");
             }
-        } else if (index == 3) { // Aktualisieren
-            //TODO
         } else if (index == 4) { // Crashreport
             File crashReportsDir = new File(modpack.get().getInstanceDir(), "crash-reports");
             if (!crashReportsDir.isDirectory() || crashReportsDir.listFiles().length == 0) {

@@ -28,6 +28,8 @@ export default class InstalledPacks extends React.Component {
     }
 
     componentDidMount() {
+        window.installed_packs = this;
+
         window.launcher.loading(true);
         window.launcher.sendIpc('request_installed_modpacks', false, (err, data) => {
             window.launcher.loading(false);
@@ -36,6 +38,10 @@ export default class InstalledPacks extends React.Component {
             }
             this.setState({ packages: JSON.parse(data.packages).sort((a, b) => a.title.localeCompare(b.title)) });
         });
+    }
+
+    componentWillUnmount() {
+        window.installed_packs = null;
     }
 
     onModpackClick(index) {
