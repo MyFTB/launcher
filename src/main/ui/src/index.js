@@ -33,10 +33,11 @@ import Settings from './components/Settings.react';
 import AvailablePacks from './components/AvailablePacks.react';
 import InstalledPacks from './components/InstalledPacks.react';
 import ModpackContextMenu from './components/ModpackContextMenu.react';
+import Console from './components/Console.react';
 
 ReactDOM.render(
     <Router>
-        <div>
+        <div className="fullheight">
             <Sidebar />
             <Launcher />
             <div className="content">
@@ -45,6 +46,7 @@ ReactDOM.render(
                 <Route path="/install" component={AvailablePacks} />
                 <Route path="/modpacks" component={InstalledPacks} />
                 <Route path="/settings" component={Settings} />
+                <Route path="/console" component={Console} />
             </div>
             <ModpackContextMenu />
         </div>

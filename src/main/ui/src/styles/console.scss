@@ -1,0 +1,19 @@
+.ReactVirtualized__Grid {
+    outline: none;
+    background-color: #111 !important;
+    border-radius: 8px;
+    box-shadow: 4px 2px 4px 0 rgba(0, 0, 0, 0.2);
+
+    .console-line {
+        > a {
+            width: 20px;
+            min-width: 20px;
+            margin-right: 5px;
+        }
+    
+        &.highlighted, &:hover {
+            background-color: unset !important;
+            color: #83da38;
+        }
+    }
+}

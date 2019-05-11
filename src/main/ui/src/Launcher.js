@@ -17,18 +17,20 @@
  */
 
 import React from 'react';
-import { NavLink } from "react-router-dom";
+import { NavLink, withRouter } from "react-router-dom";
 
 import Loading from './components/Loading.react';
 import ProgressBar from './components/base/ProgressBar.react';
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTerminal } from '@fortawesome/free-solid-svg-icons'
+import { faTerminal, faUpload, faSkull } from '@fortawesome/free-solid-svg-icons'
 
 library.add(faTerminal);
+library.add(faUpload);
+library.add(faSkull);
 
-export default class Launcher extends React.Component {
+class Launcher extends React.Component {
 
     constructor(props) {
         super(props);
@@ -46,6 +48,9 @@ export default class Launcher extends React.Component {
 
         this.acceptFeatureDialog = this.acceptFeatureDialog.bind(this);
         this.closeFeatureDialog = this.closeFeatureDialog.bind(this);
+
+        this.uploadLog = this.uploadLog.bind(this);
+        this.killMinecraft = this.killMinecraft.bind(this);
 
         this.listenIpc('logged_in', (err, data) => {
             if (!err) {
@@ -128,6 +133,17 @@ export default class Launcher extends React.Component {
         });
     }
 
+    listenIpcRaw(topic, cb) {
+        window.ipcQuery({request: topic + ':register', persistent: true,
+            onSuccess: data => cb(false, data), 
+            onFailure: (code, message) => cb(message)
+        });
+    }
+
+    unregisterIpc(topic) {
+        window.ipcQuery({request: topic + ':unregister'});
+    }
+
     /* ============================================================ Login ============================================================ */
 
     handleLoginInput(e) {
@@ -157,9 +173,9 @@ export default class Launcher extends React.Component {
 
     generalFeatureCallback(ipcChannel, cb) {
         let ipcCb = (err, data) => {
-            window.launcher.loading(false);
+            this.loading(false);
             if (err) {
-                return window.launcher.showDialog(true, <p>{err}</p>);
+                return this.showDialog(true, <p>{err}</p>);
             }
 
             if (data.features) {
@@ -212,6 +228,25 @@ export default class Launcher extends React.Component {
         }));
     }
 
+    static getDerivedStateFromProps(props, state) {
+        state.consoleOpen = props.history.location.pathname === '/console';
+        return state;
+    }
+
+    uploadLog() {
+        this.loading(true);
+        this.sendIpc('upload_log', false, (err, data) => {
+            this.loading(false);
+            if (err) {
+                return this.showDialog(true, <p>{err}</p>);
+            }
+        });
+    }
+
+    killMinecraft() {
+        this.sendIpc('kill_minecraft', false);
+    }
+
     render() {
         return (
             <div>
@@ -235,8 +270,16 @@ export default class Launcher extends React.Component {
                     </div>
                 )}
 
-                <div className={'console-breakout' + (this.state.modpackRunning ? ' active': '')}>
-                    <NavLink to="/settings" activeClassName="active"><FontAwesomeIcon icon="terminal"/></NavLink>
+                <div className={'console-breakout' + (this.state.modpackRunning && !this.state.consoleOpen ? ' active': '')}>
+                    <NavLink to="/console" activeClassName="active"><FontAwesomeIcon icon="terminal"/></NavLink>
+                </div>
+
+                <div className={'console-breakout' + (this.state.consoleOpen ? ' active': '')}>
+                    <a href="#" title="Log hochladen" onClick={this.uploadLog}><FontAwesomeIcon icon="upload"/></a>
+                </div>
+
+                <div className={'console-breakout' + (this.state.modpackRunning && this.state.consoleOpen ? ' active': '')} style={{bottom: '81px'}}>
+                    <a href="#" title="Minecraft töten" onClick={this.killMinecraft}><FontAwesomeIcon icon="skull"/></a>
                 </div>
 
                 {this.state.loading && <Loading />}
@@ -289,3 +332,5 @@ export default class Launcher extends React.Component {
     }
 
 }
+
+export default withRouter(Launcher);

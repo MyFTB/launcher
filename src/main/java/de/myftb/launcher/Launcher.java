@@ -58,7 +58,6 @@ import joptsimple.OptionSpec;
 //TODO Bootstrapper verbessern (Parallel; GZip)
 
 //TODO Ingame Helper Mod (+Discord)
-//TODO Logfenster
 //TODO Fensterbreite nicht korrekt
 public class Launcher {
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
@@ -144,6 +143,9 @@ public class Launcher {
         this.ipcHandler.listenAsync("modpack_menu_click", this.ipcTopics::onModpackContextMenuClick);
         this.ipcHandler.listenAsync("logout", this.ipcTopics::onLogout);
         this.ipcHandler.listenAsync("request_posts", this.ipcTopics::onRequestPosts);
+        this.ipcHandler.listenAsync("request_console", this.ipcTopics::onRequestConsole);
+        this.ipcHandler.listenAsync("upload_log", this.ipcTopics::onUploadLog);
+        this.ipcHandler.listenAsync("kill_minecraft", this.ipcTopics::onKillMinecraft);
     }
 
     /**

@@ -58,6 +58,9 @@ public class TopicMessageHandler extends CefMessageRouterHandlerAdapter {
             this.topicCallbacks.put(topic, callback);
             TopicMessageHandler.log.info("IPC Topic registriert: {}", topic);
             return true;
+        } else if (this.topicCallbacks.containsKey(topic) && "unregister".equals(request)) {
+            this.topicCallbacks.remove(topic);
+            return true;
         } else if (this.topicMessageConsumer.containsKey(topic)) {
             JsonObject object = null;
             if (!request.isEmpty()) {
@@ -93,7 +96,9 @@ public class TopicMessageHandler extends CefMessageRouterHandlerAdapter {
     }
 
     public void sendString(String topic, String message) {
-        SwingUtilities.invokeLater(() -> this.topicCallbacks.get(topic).success(message));
+        if (this.topicCallbacks.containsKey(topic)) {
+            SwingUtilities.invokeLater(() -> this.topicCallbacks.get(topic).success(message));
+        }
     }
 
     public static class JsonQueryCallback {

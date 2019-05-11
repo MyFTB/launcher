@@ -61,7 +61,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class LaunchMinecraft {
-    private static boolean running = false;
     private static final Logger log = LoggerFactory.getLogger(LaunchMinecraft.class);
     private static final ExecutorService downloadThreadPool = Executors
             .newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors(), runnable -> {
@@ -70,8 +69,9 @@ public class LaunchMinecraft {
                 return thread;
             });
 
-    private static final LinkedList<String> instanceLog = new LinkedList<>();
-    private static final int maxLogLines = 10000;
+    private static final LogCollector logCollector = new LogCollector();
+    private static boolean running = false;
+    private static Process minecraftProcess;
 
     private static List<Library> getAdditionalLibraries(ModpackManifest modpackManifest, MinecraftVersionManifest minecraftManifest) {
         return Collections.emptyList();
@@ -319,27 +319,32 @@ public class LaunchMinecraft {
             LaunchMinecraft.log.info("Alle Dateien aktuell, starte Minecraft");
             Launcher.getInstance().getDiscordIntegration().setRunningModpack(modpackManifest);
             LaunchMinecraft.running = true;
-            Process minecraftProcess = builder.start();
-            ProcessLogConsumer.attach(minecraftProcess, data -> {
-                LaunchMinecraft.instanceLog.add(data.trim());
-                if (LaunchMinecraft.instanceLog.size() > LaunchMinecraft.maxLogLines) {
-                    LaunchMinecraft.instanceLog.removeFirst();
-                }
-            });
-            minecraftProcess.waitFor();
+            LaunchMinecraft.minecraftProcess = builder.start();
+            LaunchMinecraft.logCollector.clear();
+            ProcessLogConsumer.attach(LaunchMinecraft.minecraftProcess, LaunchMinecraft.logCollector::log);
+            int code = LaunchMinecraft.minecraftProcess.waitFor();
+            LaunchMinecraft.logCollector.log("\nProzess mit Code " + code + " beendet\n");
         } finally {
             LaunchMinecraft.log.info("Minecraft Prozess beendet");
 
             Launcher.getInstance().getDiscordIntegration().setRunningModpack(null);
             LaunchMinecraft.running = false;
 
-            LaunchMinecraft.instanceLog.clear();
-
             LaunchMinecraft.log.trace("Lösche entpackte Natives");
             Files.walk(nativesDir.toPath())
                     .sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
                     .forEach(File::delete);
+        }
+    }
+
+    public static String getLog() {
+        return LaunchMinecraft.logCollector.getLog();
+    }
+
+    public static void killMinecraft() {
+        if (LaunchMinecraft.minecraftProcess != null && LaunchMinecraft.running) {
+            LaunchMinecraft.minecraftProcess.destroy();
         }
     }
 

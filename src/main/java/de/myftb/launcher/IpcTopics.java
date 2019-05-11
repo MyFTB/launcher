@@ -40,6 +40,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -174,7 +175,7 @@ public class IpcTopics {
             JsonObject jsonObject = new JsonObject();
             List<ModpackManifest> installedPacks = ManifestHelper.getInstalledModpacks();
             List<ModpackManifest> recentPacks = Launcher.getInstance().getConfig().getLastPlayedPacks().stream()
-                    .sorted(Comparator.reverseOrder())
+                    .sorted(Comparator.reverseOrder()) //TODO
                     .map(name -> installedPacks.stream().filter(manifest -> name.equals(manifest.getName())).findFirst().orElse(null))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
@@ -361,6 +362,31 @@ public class IpcTopics {
         JsonObject jsonObject = new JsonObject();
         jsonObject.add("posts", this.posts);
         callback.success(jsonObject);
+    }
+
+    void onRequestConsole(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        this.ipcHandler.sendString("console_data", LaunchMinecraft.getLog());
+    }
+
+    void onUploadLog(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        String log = LaunchMinecraft.getLog();
+
+        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+            try {
+                String pasteUrl = HastebinHelper.post(log.getBytes(StandardCharsets.UTF_8));
+                Desktop.getDesktop().browse(new URI(pasteUrl));
+                callback.success(new JsonObject());
+            } catch (IOException | URISyntaxException e) {
+                callback.failure("Der Log konnte nicht hochgeladen werden");
+                IpcTopics.log.warn("Log konnte nicht hochgeladen werden", e);
+            }
+        } else {
+            callback.failure("Diese Aktion ist aktuell nicht ausführbar");
+        }
+    }
+
+    void onKillMinecraft(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        LaunchMinecraft.killMinecraft();
     }
 
 }

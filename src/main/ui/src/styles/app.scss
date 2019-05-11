@@ -24,6 +24,7 @@
 @import 'progressbar.scss';
 @import 'contextmenu.scss';
 @import 'news.scss';
+@import 'console.scss';
 
 @keyframes fade-in {
     from {
@@ -77,6 +78,7 @@ $sidebarWidth: $iconSize + 180px;
                     width: 48px;
                     padding: 8px;
                     box-sizing: border-box;
+                    border-radius: 10px;
                 }
 
                 &:hover {
@@ -106,6 +108,8 @@ $sidebarWidth: $iconSize + 180px;
     margin-left: $iconSize;
     color: #eee;
     padding: 30px;
+    box-sizing: border-box;
+    height: 100%;
 }
 
 .overlayed-dark {
@@ -202,7 +206,8 @@ $sidebarWidth: $iconSize + 180px;
     border-bottom-left-radius: 8px;
     width: 48px;
     padding: 11px 0;
-    transition: right .1s;
+    transition: right .5s;
+    z-index: 10;
 
     .svg-inline--fa {
         font-size: 16px;

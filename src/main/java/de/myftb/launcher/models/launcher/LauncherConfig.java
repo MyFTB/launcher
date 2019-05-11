@@ -121,7 +121,7 @@ public class LauncherConfig {
         return this.lastPlayedPacks;
     }
 
-    public void addLastPlayedPack(String name) {
+    public void addLastPlayedPack(String name) { //TODO Duplicates
         this.lastPlayedPacks = new LinkedList<>(this.lastPlayedPacks);
         this.lastPlayedPacks.add(name);
         if (this.lastPlayedPacks.size() > 3) {
