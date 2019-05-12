@@ -58,7 +58,6 @@ import joptsimple.OptionSpec;
 //TODO Bootstrapper verbessern (Parallel; GZip)
 
 //TODO Ingame Helper Mod (+Discord)
-//TODO Fensterbreite nicht korrekt
 public class Launcher {
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
     private static boolean development = false;
@@ -111,9 +110,11 @@ public class Launcher {
         this.window = new CefFrame(this.cefBrowser);
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.window.setTitle("MyFTB Launcher v" + this.getVersion());
-        this.window.setSize(960, 576);
-        this.window.setMinimumSize(this.window.getSize());
+        this.window.setSize(990, 576);
         this.window.setVisible(true);
+
+        this.window.setSize(this.window.getWidth() + this.window.getInsets().left + this.window.getInsets().right, this.window.getHeight());
+        this.window.setMinimumSize(this.window.getSize());
 
         this.discordIntegration = new DiscordIntegration();
         this.discordIntegration.setup();
