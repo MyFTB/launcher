@@ -300,7 +300,7 @@ public class LaunchMinecraft {
         tokens.put("max_memory", String.valueOf(Launcher.getInstance().getConfig().getMaxMemory()));
 
         List<String> arguments = new LinkedList<>();
-        File runtimeDir = new File(Launcher.getInstance().getExecutableDirectory(), "runtime");
+        File runtimeDir = new File(System.getProperty("java.home"));
         arguments.add(new File(runtimeDir, "bin/java" + (Platform.getPlatform() == Platform.WINDOWS ? ".exe" : "")).getAbsolutePath());
         arguments.addAll(jvmArguments);
         arguments.add(modpackManifest.getVersionManifest().getMainClass());

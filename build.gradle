@@ -14,7 +14,7 @@ plugins {
 def os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH)
 
 apply from: 'gradle/dependencyIndicies.gradle'
-if (os.contains("mac") || os.contains("darwin")) {
+if (os.contains("mac")) {
 	apply from: 'gradle/macos.gradle'
 }
 
@@ -44,7 +44,7 @@ dependencies {
 	compile group: 'io.sentry', name: 'sentry', version: '1.7.5'
 	compile group: 'io.sentry', name: 'sentry-logback', version: '1.7.5'
 
-	shadow files('run/jcef/jcef.jar')
+	shadow files(os.contains("mac") ? 'run/jcef/jcef_app.app/Contents/Java/jcef.jar' : 'run/jcef/jcef.jar')
 	appbundler files('lib/appbundler-1.0ea.jar')
 }
 
@@ -89,7 +89,7 @@ task prepareSources(type: Copy) {
 	into('build/src/main/java')
 	filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
 			version: project.version,
-			sentrydsn: System.getProperty("sentry.dsn")
+			sentrydsn: System.getProperty("sentry.dsn", "")
 	])
 }
 

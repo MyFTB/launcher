@@ -31,6 +31,7 @@ import de.myftb.launcher.launch.LaunchHelper;
 import de.myftb.launcher.launch.LaunchMinecraft;
 import de.myftb.launcher.launch.ManifestHelper;
 import de.myftb.launcher.models.launcher.LauncherConfig;
+import de.myftb.launcher.models.launcher.Platform;
 import de.myftb.launcher.models.modpacks.ModpackManifest;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
@@ -224,6 +225,10 @@ public class Launcher {
     public File getExecutableDirectory() {
         if (Launcher.development) {
             return new File(".");
+        }
+
+        if (Platform.getPlatform() == Platform.OSX) {
+            return new File(System.getProperty("launcher.app.path")).getParentFile();
         }
 
         try {
