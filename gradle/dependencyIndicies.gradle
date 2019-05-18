@@ -1,0 +1,52 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'org.apache.httpcomponents', name: 'fluent-hc', version: '4.5.8'
+        classpath group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
+    }
+}
+
+import org.apache.http.client.fluent.Request
+import org.apache.http.HttpResponse
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonArray
+
+import java.nio.charset.StandardCharsets
+
+def downloadIndex(String indexName, File baseDir) {
+    HttpResponse indexResponse = Request.Get("https://launcher.myftb.de/${indexName}.json")
+            .connectTimeout(5000)
+            .socketTimeout(30000)
+            .execute()
+            .returnResponse()
+
+    Gson gson = new Gson()
+    JsonObject index = gson.fromJson(new InputStreamReader(indexResponse.entity.content, StandardCharsets.UTF_8), JsonElement.class).asJsonObject
+    JsonArray objects = index.getAsJsonArray("objects")
+
+    for (int i = 0; i < objects.size(); i++) {
+        JsonObject object = objects.get(i).asJsonObject
+        String path = object.get("path").asString.replace("\\", "/") //TODO Remove
+        String hash = object.get("hash").asString
+        File target = new File(baseDir, path)
+        target.getParentFile().mkdirs()
+        if (!target.isFile()) { //TODO Verify Signature
+            Request.Get("https://launcher.myftb.de/objects/${hash.substring(0, 2)}/$hash")
+                    .connectTimeout(5000)
+                    .socketTimeout(30000)
+                    .execute()
+                    .saveContent(target)
+            println "Downloaded $path"
+        }
+    }
+}
+
+task downloadJre {
+    doLast {
+        downloadIndex("jre-macosx-x64", project.file("jre"))
+    }
+}

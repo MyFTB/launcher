@@ -1,0 +1,32 @@
+task buildMacosApp {
+    doLast {
+        ant.taskdef(
+                name: 'appbundler',
+                classname: 'com.oracle.appbundler.AppBundlerTask',
+                classpath: configurations.appbundler.asPath
+        )
+        ant.appbundler(outputdirectory: "$project.buildDir/libs",
+                name: project.name,
+                displayname: project.name,
+                version: version,
+                shortversion: version,
+                icon: 'icon.icns',
+                executableName: project.name,
+                identifier: 'de.myftb.launcher.Launcher',
+                mainclassname: jar.manifest.attributes.get('Main-Class'),
+                copyright: "${Calendar.getInstance().get(Calendar.YEAR)} $project.organization",
+                jrePreferred: true) {
+            runtime(dir: project.file('jre/Contents/Home'))
+            classpath(file: shadowJar.archivePath)
+
+            option(value: '-Xdock:icon=Contents/Resources/icon.icns')
+            option(value: "-Xdock:name=${project.name}")
+            option(value: "-Dcom.apple.mrj.application.apple.menu.about.name=${project.name}")
+
+            option(value: '-Dfile.encoding=UTF-8')
+            option(value: '-Djava.library.path=$APP_ROOT/Contents/Java/:$APP_ROOT/Contents/Frameworks/Chromium Embedded Framework.framework/Libraries')
+        }
+    }
+}
+
+shadowJar.finalizedBy buildMacosApp

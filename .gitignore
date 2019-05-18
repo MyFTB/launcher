@@ -5,3 +5,4 @@ build/
 out/
 run/
 src/main/resources/webroot/
+.DS_Store

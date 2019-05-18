@@ -11,6 +11,17 @@ plugins {
 	id 'com.github.ben-manes.versions' version '0.21.0'
 }
 
+def os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH)
+
+apply from: 'gradle/dependencyIndicies.gradle'
+if (os.contains("mac") || os.contains("darwin")) {
+	apply from: 'gradle/macos.gradle'
+}
+
+configurations {
+	appbundler
+}
+
 repositories {
 	mavenCentral()
 	jcenter()
@@ -32,6 +43,7 @@ dependencies {
 	compile group: 'com.github.vatbub', name: 'mslinks', version: '1.0.5'
 
 	shadow files('run/jcef/jcef.jar')
+	appbundler files('lib/appbundler-1.0ea.jar')
 }
 
 jar {
@@ -49,6 +61,8 @@ jar {
 }
 
 /* ======================================== Buildscript Configuration ======================================== */
+
+build.dependsOn shadowJar
 
 sourceCompatibility = targetCompatibility = '1.8'
 
@@ -75,11 +89,10 @@ task prepareSources(type: Copy) {
 	filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [version: project.version])
 }
 
-import org.apache.tools.ant.taskdefs.condition.Os
 task buildWebroot(type: Exec) {
 	workingDir "$projectDir/src/main/ui"
 
-	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+	if (os.contains('windows')) {
 		commandLine 'cmd', '/c', 'node_modules\\.bin\\webpack.cmd', '--mode', 'production'
 	} else {
 		commandLine './node_modules/.bin/webpack', '--mode', 'production'
@@ -97,7 +110,7 @@ task sourceJar(type: Jar) {
 }
 
 artifacts {
-	archives sourceJar, jar
+	archives sourceJar, jar, shadowJar
 }
 
 license {
