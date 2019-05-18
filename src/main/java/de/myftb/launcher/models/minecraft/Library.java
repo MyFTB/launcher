@@ -41,6 +41,14 @@ public class Library {
         return this.name;
     }
 
+    public String getArtifactGroup() {
+        return this.name.split("[:]")[0];
+    }
+
+    public String getArtifactName() {
+        return this.name.split("[:]")[1];
+    }
+
     public Downloads getDownloads() {
         return this.downloads;
     }

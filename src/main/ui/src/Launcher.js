@@ -37,13 +37,15 @@ class Launcher extends React.Component {
         this.state = {
             loading: true, loginForm: false, loginFormPrefill: false, loginDisabled: true, loginError: '', 
             profile: false, dialog: false, dialogCloseable: false, loginListeners: [], modpackRunning: false,
-            featureMessage: false, featureCallback: false, installationStatus: false
+            featureMessage: false, featureCallback: false, installationStatus: false,
+            welcomeMessage: false
         };
         
         window.launcher = this;
 
         this.handleLoginInput = this.handleLoginInput.bind(this);
         this.handleLogin = this.handleLogin.bind(this);
+        this.handlePasswordKeyDown = this.handlePasswordKeyDown.bind(this);
         this.resetDialog = this.resetDialog.bind(this);
 
         this.acceptFeatureDialog = this.acceptFeatureDialog.bind(this);
@@ -65,6 +67,17 @@ class Launcher extends React.Component {
 
         this.listenIpc('launch_pack', (err, data) => {
             this.launchModpack(data);
+        });
+
+        this.listenIpc('welcome_message', (err, data) => {
+            this.showDialog(false, [
+                <h3>Herzlich Willkommen!</h3>,
+                <p>Es scheint so, als hättest du den Launcher gerade zum ersten Mal gestartet. </p>,
+                <p>Zu Beginn solltest du in den <b>Einstellungen</b> einige Dinge konfigurieren.</p>,
+                <br></br>,
+                <p>Dort kannst du unter anderem auch den Installationsort für Modpacks festlegen. Dieser ist aktuell auf <b>{data.installation_dir}</b> festgelegt.</p>,
+                <NavLink to="/settings" className="btn" onClick={this.resetDialog}>Zu den Einstellungen</NavLink>
+            ]);
         });
 
         this.sendIpc('renderer_arrived', false, (err, data) => {
@@ -164,6 +177,12 @@ class Launcher extends React.Component {
         });
     }
 
+    handlePasswordKeyDown(e) {
+        if (e.keyCode === 13 && document.getElementById('username').value.trim().length > 0 && document.getElementById('password').value.trim().length > 0) {
+            this.handleLogin();
+        }
+    }
+
     logout() {
         this.sendIpc('logout');
         this.state.loginListeners.forEach(comp => comp.onLogin(false));
@@ -261,7 +280,7 @@ class Launcher extends React.Component {
                             </div>
                             <div className="form-group">
                                 <p>Passwort</p>
-                                <input type="password" id="password" onInput={this.handleLoginInput}></input>
+                                <input type="password" id="password" onInput={this.handleLoginInput} onKeyDown={this.handlePasswordKeyDown}></input>
                             </div>
                             <div className="form-group">
                                 <button className="btn login-btn" onClick={this.handleLogin} disabled={this.state.loginDisabled}>Anmelden</button>

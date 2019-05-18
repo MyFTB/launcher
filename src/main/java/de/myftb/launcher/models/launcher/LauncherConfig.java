@@ -121,11 +121,13 @@ public class LauncherConfig {
         return this.lastPlayedPacks;
     }
 
-    public void addLastPlayedPack(String name) { //TODO Duplicates
+    public void addLastPlayedPack(String name) {
         this.lastPlayedPacks = new LinkedList<>(this.lastPlayedPacks);
-        this.lastPlayedPacks.add(name);
+        this.lastPlayedPacks.removeIf(str -> str.equals(name));
+        ((LinkedList<String>) this.lastPlayedPacks).addFirst(name);
+
         if (this.lastPlayedPacks.size() > 3) {
-            ((LinkedList<String>) this.lastPlayedPacks).removeFirst();
+            ((LinkedList<String>) this.lastPlayedPacks).removeLast();
         }
     }
 

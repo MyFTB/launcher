@@ -175,7 +175,6 @@ public class IpcTopics {
             JsonObject jsonObject = new JsonObject();
             List<ModpackManifest> installedPacks = ManifestHelper.getInstalledModpacks();
             List<ModpackManifest> recentPacks = Launcher.getInstance().getConfig().getLastPlayedPacks().stream()
-                    .sorted(Comparator.reverseOrder()) //TODO
                     .map(name -> installedPacks.stream().filter(manifest -> name.equals(manifest.getName())).findFirst().orElse(null))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());

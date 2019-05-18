@@ -77,6 +77,19 @@ public class LaunchMinecraft {
         return Collections.emptyList();
     }
 
+    private static List<Library> getAllLibraries(ModpackManifest modpackManifest, MinecraftVersionManifest minecraftManifest) {
+        List<Library> modpackLibs = modpackManifest.getVersionManifest().getLibraries().stream()
+                .filter(library -> minecraftManifest.getLibraries().stream().noneMatch(lib -> lib.getName().equals(library.getName())))
+                .collect(Collectors.toList());
+
+        List<Library> joinedLibs = new ArrayList<>(modpackLibs);
+        minecraftManifest.getLibraries().stream()
+                .filter(library -> joinedLibs.stream().noneMatch(lib -> lib.getArtifactGroup().equals(library.getArtifactGroup()) && lib.getArtifactName().equals(library.getArtifactName())))
+                .forEach(joinedLibs::add);
+
+        return joinedLibs;
+    }
+
     public static boolean install(ModpackManifest modpackManifest, List<String> selectedFeatures, InstallationStatusListener statusListener)
             throws IOException {
         File instanceDir = modpackManifest.getInstanceDir();
@@ -90,9 +103,6 @@ public class LaunchMinecraft {
         List<DownloadCallable> tasks = new ArrayList<>();
 
         MinecraftVersionManifest minecraftManifest = ManifestHelper.getManifest(modpackManifest.getGameVersion());
-        List<Library> modpackLibs = modpackManifest.getVersionManifest().getLibraries().stream()
-                .filter(library -> minecraftManifest.getLibraries().stream().noneMatch(lib -> lib.getName().equals(library.getName())))
-                .collect(Collectors.toList());
 
         // Client Jar
         MinecraftVersionManifest.Download clientDownload = minecraftManifest.getDownloads().get("client");
@@ -101,8 +111,8 @@ public class LaunchMinecraft {
                 clientDownload.getSha1(),
                 new File(Launcher.getInstance().getSaveSubDirectory("versions"), minecraftManifest.getId() + ".jar"))));
 
-        // Vanilla Minecraft Libraries (Durch Vanilla Manifest)
-        tasks.addAll(minecraftManifest.getLibraries().stream()
+        // Minecraft Libraries
+        tasks.addAll(LaunchMinecraft.getAllLibraries(modpackManifest, minecraftManifest).stream()
                 .flatMap(libary -> libary.getDownloadables().stream())
                 .map(DownloadCallable::new)
                 .collect(Collectors.toList()));
@@ -127,12 +137,6 @@ public class LaunchMinecraft {
                                 ? "assets/virtual/" + minecraftManifest.getAssetIndex().getId()
                                 : "assets/objects"),
                                 assetIndex.isVirtual() ? entry.getKey() : entry.getValue().getSubPath()))))
-                .collect(Collectors.toList()));
-
-        // Libraries welche durch das Modpack benötigt werden (Beispielsweise Forge)
-        tasks.addAll(modpackLibs.stream()
-                .map(library -> new MavenDownloadCallable(library.getName(),
-                        new File(Launcher.getInstance().getSaveSubDirectory("libraries"), library.getPath(null))))
                 .collect(Collectors.toList()));
 
         // Modpack Installation Tasks
@@ -176,6 +180,7 @@ public class LaunchMinecraft {
         return success;
     }
 
+    //TODO MC 1.8 launcht nicht richtig
     public static void launch(ModpackManifest modpackManifest, UserAuthentication userAuthentication) throws IOException, InterruptedException {
         if (LaunchMinecraft.running) {
             throw new IllegalStateException("Es läuft bereits ein Modpack");
@@ -259,23 +264,15 @@ public class LaunchMinecraft {
 
         jvmArguments.addAll(Arrays.asList(Launcher.getInstance().getConfig().getJvmArgs().split(" ")));
 
-        List<Library> modpackLibs = modpackManifest.getVersionManifest().getLibraries().stream()
-                .filter(library -> minecraftManifest.getLibraries().stream().noneMatch(lib -> lib.getName().equals(library.getName())))
-                .collect(Collectors.toList());
+        List<Library> libraries = LaunchMinecraft.getAllLibraries(modpackManifest, minecraftManifest);
 
         File librariesDir = Launcher.getInstance().getSaveSubDirectory("libraries");
-        List<String> classpath = minecraftManifest.getLibraries().stream()
+        List<String> classpath = libraries.stream()
                 .map(library -> new File(librariesDir, library.getPath(null)))
                 .map(File::getAbsolutePath)
                 .collect(Collectors.toList());
-        classpath.addAll(modpackLibs.stream()
-                .map(library -> new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
-                        library.getPath(null)).getAbsolutePath())
-                .collect(Collectors.toList()));
         classpath.add(new File(Launcher.getInstance().getSaveSubDirectory("versions"),
                 minecraftManifest.getId() + ".jar").getAbsolutePath());
-
-        LaunchMinecraft.log.info("Classpath: " + String.join("\n", classpath));
 
         Map<String, String> tokens = new HashMap<>();
         tokens.put("auth_player_name", userAuthentication.getSelectedProfile().getName());

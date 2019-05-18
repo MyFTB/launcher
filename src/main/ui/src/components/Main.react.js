@@ -35,7 +35,7 @@ export default class Main extends React.Component {
             if (err) {
                 return window.launcher.showDialog(true, <p>{err}</p>);
             }
-            this.setState({ packages: JSON.parse(data.packages).sort((a, b) => a.title.localeCompare(b.title)) });
+            this.setState({ packages: JSON.parse(data.packages) });
         });
     }
 
