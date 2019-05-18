@@ -41,6 +41,8 @@ dependencies {
 	compile group: 'org.java-websocket', name: 'Java-WebSocket', version: '1.4.0'
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '5.0.4'
 	compile group: 'com.github.vatbub', name: 'mslinks', version: '1.0.5'
+	compile group: 'io.sentry', name: 'sentry', version: '1.7.5'
+	compile group: 'io.sentry', name: 'sentry-logback', version: '1.7.5'
 
 	shadow files('run/jcef/jcef.jar')
 	appbundler files('lib/appbundler-1.0ea.jar')
@@ -82,11 +84,13 @@ configure([compileJava, compileTestJava]) {
 	}
 }*/
 
-
 task prepareSources(type: Copy) {
 	from('src/main/java')
 	into('build/src/main/java')
-	filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [version: project.version])
+	filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [
+			version: project.version,
+			sentrydsn: System.getProperty("sentry.dsn")
+	])
 }
 
 task buildWebroot(type: Exec) {

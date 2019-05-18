@@ -28,19 +28,23 @@ import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.util.UUIDTypeAdapter;
 
 import de.myftb.launcher.Constants;
+import de.myftb.launcher.Launcher;
 import de.myftb.launcher.cef.DataResourceHandler;
 
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import javax.imageio.ImageIO;
 
@@ -69,6 +73,28 @@ public class PlayerHeadScheme extends DataResourceHandler {
     }
 
     private byte[] getSkin(String uuid) {
+        try {
+            File cacheFile = new File(Launcher.getInstance().getSaveSubDirectory("cache"), uuid + ".png");
+            if (!cacheFile.isFile() || (System.currentTimeMillis() - cacheFile.lastModified()) >= TimeUnit.DAYS.toMillis(1)) {
+                byte[] skin = this.getRemoteSkin(uuid);
+                if (skin.length > 0) {
+                    Files.write(cacheFile.toPath(), skin);
+                }
+                return skin;
+            }
+
+            if (cacheFile.isFile()) {
+                return Files.readAllBytes(cacheFile.toPath());
+            }
+
+            return new byte[0];
+        } catch (IOException e) {
+            PlayerHeadScheme.log.warn("Fehler bei der Skinabfrage", e);
+            return new byte[0];
+        }
+    }
+
+    private byte[] getRemoteSkin(String uuid) {
         try {
             HttpResponse response = Request.Get("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid)
                     .connectTimeout(Constants.connectTimeout)

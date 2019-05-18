@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.apache.http.client.HttpResponseException;
@@ -52,7 +53,7 @@ public class ModpackImageScheme extends DataResourceHandler {
             }
 
             File cacheFile = new File(Launcher.getInstance().getSaveSubDirectory("cache"), imageLocation.get());
-            if (!cacheFile.isFile() || (System.currentTimeMillis() - cacheFile.lastModified()) >= 259200000) {
+            if (!cacheFile.isFile() || (System.currentTimeMillis() - cacheFile.lastModified()) >= TimeUnit.DAYS.toMillis(3)) {
                 Request.Get("https://launcher.myftb.de/images/" + imageLocation.get())
                         .connectTimeout(Constants.connectTimeout)
                         .socketTimeout(Constants.socketTimeout)

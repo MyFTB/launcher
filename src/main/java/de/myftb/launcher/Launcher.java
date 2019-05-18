@@ -34,14 +34,19 @@ import de.myftb.launcher.models.launcher.LauncherConfig;
 import de.myftb.launcher.models.modpacks.ModpackManifest;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
+import io.sentry.Sentry;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.cef.CefApp;
 import org.cef.CefClient;
 import org.cef.OS;
@@ -53,9 +58,6 @@ import org.slf4j.LoggerFactory;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
-
-//TODO Bootstrapper Installer
-//TODO Bootstrapper verbessern (Parallel; GZip)
 
 //TODO Ingame Helper Mod (+Discord)
 public class Launcher {
@@ -73,6 +75,7 @@ public class Launcher {
     private LauncherConfig config;
     private ModpackManifestList modpackList;
     private String launchPack;
+    private boolean firstStart;
 
     public Launcher(String[] args) throws Exception {
         OptionParser optionParser = new OptionParser();
@@ -81,6 +84,7 @@ public class Launcher {
         OptionSet optionSet = optionParser.parse(args);
         this.launchPack = optionSet.valueOf(launchingPack);
 
+        this.firstStart = !new File(this.getExecutableDirectory(), "config.json").exists();
         this.config = new LauncherConfig();
         this.config = this.config.readConfig(this.getExecutableDirectory()); // Workaround damit Profile korrekt gelesen werden.
         this.config = this.config.readConfig(this.getExecutableDirectory()); // Zukünftig vielleicht einen Custom (De)Serializer?
@@ -115,6 +119,7 @@ public class Launcher {
 
         this.window.setSize(this.window.getWidth() + this.window.getInsets().left + this.window.getInsets().right, this.window.getHeight());
         this.window.setMinimumSize(this.window.getSize());
+        this.window.setLocationRelativeTo(null);
 
         this.discordIntegration = new DiscordIntegration();
         this.discordIntegration.setup();
@@ -160,6 +165,13 @@ public class Launcher {
         this.saveConfig();
         Launcher.log.info("Minecraft Account angemeldet: " + this.config.getProfile().getSelectedProfile());
         this.ipcHandler.send("logged_in", this.config.getProfile().getSelectedProfile());
+
+        if (this.firstStart) {
+            this.firstStart = false;
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("installation_dir", this.getSaveDirectory().getAbsolutePath());
+            this.ipcHandler.send("welcome_message", jsonObject);
+        }
 
         if (this.launchPack != null) {
             String pack = this.launchPack;
@@ -327,13 +339,23 @@ public class Launcher {
         return this.ipcHandler;
     }
 
-    public String getVersion() {
+    public static String getVersion() {
         return "@version@";
     }
 
     public static void main(String[] args) throws Exception {
         if ("dev".equals(System.getProperty("environment", "production"))) {
             Launcher.development = true;
+        }
+
+        String dsn = "@sentrydsn@";
+        if (dsn.startsWith("http")) {
+            String sentryParameters = URLEncodedUtils.format(Arrays.asList(
+                    new BasicNameValuePair("release", Launcher.getVersion()),
+                    new BasicNameValuePair("environment", Launcher.development ? "development" : "production"),
+                    new BasicNameValuePair("stacktrace.app.packages", "de.myftb.launcher")
+            ), StandardCharsets.UTF_8);
+            Sentry.init(dsn + "?" + sentryParameters);
         }
 
         Launcher.instance = new Launcher(args);
