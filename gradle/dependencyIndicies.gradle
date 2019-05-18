@@ -45,8 +45,27 @@ def downloadIndex(String indexName, File baseDir) {
     }
 }
 
+def downloadPlatformDependent(String name, File baseDir) {
+    def osName = System.getProperty("os.name").toLowerCase()
+    def arch = System.getProperty("os.arch").contains("64") ? "-x64" : ""
+    def os = "linux"
+    if (osName.contains("win")) {
+        os = "windows"
+    } else if (osName.contains("mac")) {
+        os = "macosx"
+    }
+
+    downloadIndex("${name}-${os}${arch}", baseDir)
+}
+
 task downloadJre {
     doLast {
-        downloadIndex("jre-macosx-x64", project.file("jre"))
+        downloadPlatformDependent("jre", project.file("run/runtime"))
+    }
+}
+
+task downloadCef {
+    doLast {
+        downloadPlatformDependent("jcef", project.file("run/jcef"))
     }
 }

@@ -29,4 +29,6 @@ task buildMacosApp {
     }
 }
 
+buildMacosApp.dependsOn downloadJre
+buildMacosApp.dependsOn downloadCef
 shadowJar.finalizedBy buildMacosApp
