@@ -92,7 +92,7 @@ public class ModpackWebstart extends WebSocketServer {
             if ("ping".equals(type)) {
                 JsonObject response = new JsonObject();
                 response.addProperty("type", "pong");
-                response.addProperty("version", Launcher.getInstance().getVersion());
+                response.addProperty("version", Launcher.getVersion());
                 conn.send(response.toString());
             } else if ("launch".equals(type)) {
                 if (!jsonObject.has("pack")) {

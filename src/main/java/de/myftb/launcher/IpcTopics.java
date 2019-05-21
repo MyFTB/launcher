@@ -30,6 +30,7 @@ import de.myftb.launcher.cef.ipc.TopicMessageHandler;
 import de.myftb.launcher.launch.LaunchHelper;
 import de.myftb.launcher.launch.LaunchMinecraft;
 import de.myftb.launcher.launch.ManifestHelper;
+import de.myftb.launcher.models.launcher.Platform;
 import de.myftb.launcher.models.modpacks.ModpackManifest;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
@@ -50,10 +51,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.swing.JFileChooser;
 
+import mslinks.ShellLink;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.slf4j.Logger;
@@ -187,7 +190,8 @@ public class IpcTopics {
         }
     }
 
-    Optional<Boolean> manifestInstallHelper(ModpackManifest manifest, JsonObject data, TopicMessageHandler.JsonQueryCallback callback) throws IOException {
+    Optional<Boolean> manifestInstallHelper(ModpackManifest manifest, JsonObject data, TopicMessageHandler.JsonQueryCallback callback)
+            throws IOException {
         if ((manifest.getFeatures() != null && !manifest.getFeatures().isEmpty()) && !data.has("selected_features")) {
             data.addProperty("features", LaunchHelper.mapper.writeValueAsString(manifest.getFeatures()));
             callback.success(data);
@@ -332,7 +336,52 @@ public class IpcTopics {
                         }
                     });
         } else if (index == 5) { // Desktop-Verknüpfung
-            //TODO
+            String executablePath = System.getProperty("launcher.app.path");
+            if (executablePath == null) {
+                callback.failure("Der Pfad zum Launcher konnte nicht erkannt werden");
+                return;
+            }
+
+            File desktop = new File(System.getProperty("user.home"), "Desktop");
+            if (!desktop.isDirectory()) {
+                callback.failure("Der Desktop konnte nicht gefunden werden");
+                return;
+            }
+
+            try {
+                Platform platform = Platform.getPlatform();
+                boolean needsIco = platform == Platform.WINDOWS;
+                File modpackImage = new File(this.launcher.getSaveSubDirectory("cache"),
+                        UUID.randomUUID().toString() + (needsIco ? ".ico" : ".png"));
+                modpack.get().saveModpackLogo(modpackImage);
+
+                if (platform == Platform.WINDOWS) {
+                    ShellLink link = ShellLink.createLink(executablePath)
+                            .setWorkingDir(new File(executablePath).getParentFile().getAbsolutePath())
+                            .setName(modpack.get().getTitle())
+                            .setCMDArgs("--pack \"" + modpack.get().getName() + "\"")
+                            .setIconLocation(modpackImage.isFile() ? modpackImage.getAbsolutePath() : null);
+                    link.getHeader().setIconIndex(0);
+                    link.saveTo(new File(desktop, modpack.get().getTitle() + ".lnk").getAbsolutePath());
+                    callback.success(new JsonObject());
+                } else if (platform == Platform.LINUX) {
+                    File desktopEntry = new File(desktop, modpack.get().getTitle() + ".desktop");
+                    Files.write(desktopEntry.toPath(), Arrays.asList(
+                            "[Desktop Entry]",
+                            "Name=" + modpack.get().getTitle(),
+                            "Exec=" + executablePath + " --pack \"" + modpack.get().getName() + "\"",
+                            "Icon=" + modpackImage.getAbsolutePath(),
+                            "Categories=Game",
+                            "Path=" + new File(executablePath).getParentFile().getAbsolutePath(),
+                            "Terminal=false"
+                    ), StandardCharsets.UTF_8);
+                } else {
+                    callback.failure("Verknüpfungen werden auf dieser Platform nicht unterstützt");
+                }
+            } catch (IOException e) {
+                callback.failure("Die Desktop-Verknüpfung konnte nicht angelegt werden");
+                IpcTopics.log.warn("Desktop-Verknüpfung konnte nicht angelegt werden", e);
+            }
         }
     }
 

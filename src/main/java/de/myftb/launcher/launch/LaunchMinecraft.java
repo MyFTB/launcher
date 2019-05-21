@@ -84,7 +84,8 @@ public class LaunchMinecraft {
 
         List<Library> joinedLibs = new ArrayList<>(modpackLibs);
         minecraftManifest.getLibraries().stream()
-                .filter(library -> joinedLibs.stream().noneMatch(lib -> lib.getArtifactGroup().equals(library.getArtifactGroup()) && lib.getArtifactName().equals(library.getArtifactName())))
+                .filter(library -> joinedLibs.stream().noneMatch(lib -> lib.getArtifactGroup().equals(library.getArtifactGroup())
+                        && lib.getArtifactName().equals(library.getArtifactName())))
                 .forEach(joinedLibs::add);
 
         return joinedLibs;
@@ -293,7 +294,7 @@ public class LaunchMinecraft {
 
         tokens.put("natives_directory", nativesDir.getAbsolutePath());
         tokens.put("launcher_name", "MyFTBLauncher");
-        tokens.put("launcher_version", Launcher.getInstance().getVersion());
+        tokens.put("launcher_version", Launcher.getVersion());
         tokens.put("classpath", String.join(";", classpath));
 
         tokens.put("min_memory", String.valueOf(Launcher.getInstance().getConfig().getMinMemory()));
@@ -351,6 +352,8 @@ public class LaunchMinecraft {
     }
 
     public static class ModpackOutdatedException extends RuntimeException {
+        public static final long serialVersionUID = 8535148436818832712L;
+
         private final ModpackManifestList.ModpackManifestReference modpack;
 
         private ModpackOutdatedException(ModpackManifestList.ModpackManifestReference modpack) {

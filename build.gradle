@@ -41,6 +41,7 @@ dependencies {
 	compile group: 'org.java-websocket', name: 'Java-WebSocket', version: '1.4.0'
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '5.0.4'
 	compile group: 'com.github.vatbub', name: 'mslinks', version: '1.0.5'
+	compile group: 'org.jclarion', name: 'image4j', version: '0.7'
 	compile group: 'io.sentry', name: 'sentry', version: '1.7.5'
 	compile group: 'io.sentry', name: 'sentry-logback', version: '1.7.5'
 
@@ -163,3 +164,31 @@ pmd {
 	reportsDir = file("$project.buildDir/reports/pmd")
 	ruleSets = ['java-basic', 'java-braces']
 }
+
+
+task runLauncher(type: JavaExec) {
+	if (os.contains("mac")) {
+		throw new GradleException("Diese Aktion ist unter macOS nicht unterstützt")
+	}
+
+	classpath = sourceSets.main.runtimeClasspath + project.configurations.shadow
+
+	main = jar.manifest.attributes.get('Main-Class')
+	workingDir = project.file("run")
+
+	systemProperty 'environment', 'dev'
+	systemProperty 'java.library.path', project.file("run/jcef")
+
+	if (System.getProperty('launcher.sentry.dsn') != null) {
+		systemProperty 'launcher.sentry.dsn', System.getProperty('launcher.sentry.dsn')
+	}
+
+	def javaPath = 'run/runtime/bin/java'
+	if (os.contains('win')) {
+		javaPath += '.exe'
+	}
+
+	executable = "${project.file(javaPath)}"
+}
+runLauncher.dependsOn downloadJre
+runLauncher.dependsOn downloadCef

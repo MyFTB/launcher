@@ -47,7 +47,7 @@ public class LogCollector {
         return new String(this.log, 0, this.length, StandardCharsets.UTF_8);
     }
 
-    public void clear(){
+    public void clear() {
         this.length = 0;
     }
 

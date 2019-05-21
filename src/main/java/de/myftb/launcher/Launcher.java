@@ -46,6 +46,10 @@ import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
+
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.cef.CefApp;
@@ -55,10 +59,6 @@ import org.cef.browser.CefBrowser;
 import org.cef.browser.CefMessageRouter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
 
 //TODO Ingame Helper Mod (+Discord)
 public class Launcher {
@@ -93,9 +93,15 @@ public class Launcher {
 
         this.cefApp = CefFrame.getApp();
         CefApp.CefVersion version = cefApp.getVersion();
+        Launcher.log.info("Version: {}", Launcher.getVersion());
         Launcher.log.info("JCef Version: {}", version.getJcefVersion());
         Launcher.log.info("Cef Version: {}", version.getCefVersion());
         Launcher.log.info("Chrome Version: {}", version.getChromeVersion());
+
+        Launcher.log.info("Ausführungsverzeichnis: {}", this.getExecutableDirectory().getCanonicalFile());
+        Launcher.log.info("Speicherverzeichnis: {}", this.getSaveDirectory().getCanonicalFile());
+        Launcher.log.info("Javainstallation: {}", System.getProperty("java.home"));
+        Launcher.log.info("Entwicklungsversion: {}", Launcher.development);
 
         CefClient client = this.cefApp.createClient();
         client.addRequestHandler(new BlockExternalRequestHandler());
@@ -114,7 +120,7 @@ public class Launcher {
 
         this.window = new CefFrame(this.cefBrowser);
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.window.setTitle("MyFTB Launcher v" + this.getVersion());
+        this.window.setTitle("MyFTB Launcher v" + Launcher.getVersion());
         this.window.setSize(990, 576);
         this.window.setVisible(true);
 
@@ -312,7 +318,7 @@ public class Launcher {
      * Die Liste wird gecached beim ersten Abruf.
      *
      * @return Modpackliste
-     * @throws IOException
+     * @throws IOException IOException
      */
     public ModpackManifestList getRemotePacks() throws IOException {
         if (this.modpackList == null) {
@@ -353,7 +359,7 @@ public class Launcher {
             Launcher.development = true;
         }
 
-        String dsn = "@sentrydsn@";
+        String dsn = System.getProperty("launcher.sentry.dsn", "@sentrydsn@");
         if (dsn.startsWith("http")) {
             String sentryParameters = URLEncodedUtils.format(Arrays.asList(
                     new BasicNameValuePair("release", Launcher.getVersion()),

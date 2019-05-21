@@ -20,12 +20,22 @@ package de.myftb.launcher.models.modpacks;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import com.google.common.io.Files;
+
+import de.myftb.launcher.Constants;
 import de.myftb.launcher.Launcher;
 import de.myftb.launcher.models.minecraft.MinecraftVersionManifest;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import javax.imageio.ImageIO;
+
+import net.sf.image4j.codec.ico.ICOEncoder;
+import org.apache.http.client.fluent.Request;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ModpackManifest {
@@ -75,6 +85,37 @@ public class ModpackManifest {
         File instanceDir = new File(Launcher.getInstance().getSaveSubDirectory("instances"), this.getName());
         instanceDir.mkdirs();
         return instanceDir;
+    }
+
+    public boolean saveModpackLogo(File target) throws IOException {
+        Optional<String> imageLocation = Launcher.getInstance().getRemotePacks().getPackByName(this.name)
+                .map(ModpackManifestList.ModpackManifestReference::getLocation)
+                .map(location -> location.substring(0, location.lastIndexOf('.')) + ".png");
+
+        if (!imageLocation.isPresent()) {
+            return false;
+        }
+
+        if (!target.isFile() || (System.currentTimeMillis() - target.lastModified()) >= TimeUnit.DAYS.toMillis(3)) {
+            File icoTarget = null;
+
+            if (target.getName().endsWith(".ico")) {
+                icoTarget = target;
+                target = new File(target.getParentFile(), Files.getNameWithoutExtension(target.getName()) + ".png");
+            }
+
+            Request.Get("https://launcher.myftb.de/images/" + imageLocation.get())
+                    .connectTimeout(Constants.connectTimeout)
+                    .socketTimeout(Constants.socketTimeout)
+                    .execute()
+                    .saveContent(target);
+
+            if (icoTarget != null) {
+                ICOEncoder.write(ImageIO.read(target), 32, icoTarget);
+            }
+        }
+
+        return true;
     }
 
 }

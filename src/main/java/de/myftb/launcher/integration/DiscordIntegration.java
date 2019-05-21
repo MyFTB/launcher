@@ -18,6 +18,11 @@
 
 package de.myftb.launcher.integration;
 
+import club.minnced.discord.rpc.DiscordEventHandlers;
+import club.minnced.discord.rpc.DiscordRPC;
+import club.minnced.discord.rpc.DiscordRichPresence;
+import club.minnced.discord.rpc.DiscordUser;
+
 import de.myftb.launcher.models.modpacks.ModpackManifest;
 
 import java.util.Timer;
@@ -27,11 +32,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import club.minnced.discord.rpc.DiscordEventHandlers;
-import club.minnced.discord.rpc.DiscordRPC;
-import club.minnced.discord.rpc.DiscordRichPresence;
-import club.minnced.discord.rpc.DiscordUser;
 
 public class DiscordIntegration extends TimerTask {
     private static final Logger log = LoggerFactory.getLogger(DiscordIntegration.class);
