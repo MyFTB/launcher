@@ -30,7 +30,7 @@ def downloadIndex(String indexName, File baseDir) {
 
     for (int i = 0; i < objects.size(); i++) {
         JsonObject object = objects.get(i).asJsonObject
-        String path = object.get("path").asString.replace("\\", "/") //TODO Remove
+        String path = object.get("path").asString
         String hash = object.get("hash").asString
         File target = new File(baseDir, path)
         target.getParentFile().mkdirs()

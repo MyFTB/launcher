@@ -25,6 +25,7 @@
     </appender>
 
     <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
+        <filter class="de.myftb.launcher.logging.SentryExceptionFilter" />
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>WARN</level>
         </filter>

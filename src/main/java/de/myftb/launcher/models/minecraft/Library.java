@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.myftb.launcher.Launcher;
 import de.myftb.launcher.launch.DownloadCallable;
+import de.myftb.launcher.launch.MavenDownloadCallable;
 import de.myftb.launcher.models.launcher.Platform;
 
 import java.io.File;
@@ -49,12 +50,24 @@ public class Library {
         return this.name.split("[:]")[1];
     }
 
+    public String getArtifactVersion() {
+        return this.name.split("[:]")[2];
+    }
+
+    public void setDownloads(Downloads downloads) {
+        this.downloads = downloads;
+    }
+
     public Downloads getDownloads() {
         return this.downloads;
     }
 
     public Map<String, String> getNatives() {
         return this.natives;
+    }
+
+    public void setNatives(Map<String, String> natives) {
+        this.natives = natives;
     }
 
     public Map<String, List<String>> getExtract() {
@@ -65,15 +78,15 @@ public class Library {
         return this.rules;
     }
 
-    public List<DownloadCallable.Downloadable> getDownloadables() {
-        List<DownloadCallable.Downloadable> downloadables = new ArrayList<>();
+    public List<DownloadCallable> getLibraryDownloads() {
+        List<DownloadCallable> downloads = new ArrayList<>();
 
         if (this.downloads != null) {
             if (this.downloads.artifact != null) {
-                downloadables.add(new DownloadCallable.Downloadable(this.downloads.artifact.url,
+                downloads.add(new DownloadCallable(new DownloadCallable.Downloadable(this.downloads.artifact.url,
                         this.downloads.artifact.sha1,
                         new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
-                                this.downloads.artifact.path)));
+                                this.downloads.artifact.path))));
             }
 
             if (this.downloads.classifiers != null && this.natives != null && this.natives.containsKey(Platform.getPlatform().name().toLowerCase())) {
@@ -81,15 +94,18 @@ public class Library {
                         .replace("${arch}", System.getProperty("os.arch").contains("64") ? "64" : "32");
                 if (this.downloads.classifiers.containsKey(classifier)) {
                     DownloadInfo classifierDownload = this.downloads.classifiers.get(classifier);
-                    downloadables.add(new DownloadCallable.Downloadable(classifierDownload.url,
+                    downloads.add(new DownloadCallable(new DownloadCallable.Downloadable(classifierDownload.url,
                             classifierDownload.sha1,
                             new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
-                                    classifierDownload.path)));
+                                    classifierDownload.path))));
                 }
             }
+        } else {
+            downloads.add(new MavenDownloadCallable(this.name, new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
+                    this.getPath(null))));
         }
 
-        return downloadables;
+        return downloads;
     }
 
     public String getPath(String classifier) {
@@ -125,9 +141,26 @@ public class Library {
             return this.artifact;
         }
 
+        public void setArtifact(DownloadInfo artifact) {
+            this.artifact = artifact;
+        }
+
         public Map<String, DownloadInfo> getClassifiers() {
             return this.classifiers;
         }
+
+        public void setClassifiers(Map<String, DownloadInfo> classifiers) {
+            this.classifiers = classifiers;
+        }
+
+        @Override
+        public String toString() {
+            return "Downloads{"
+                    + "artifact=" + artifact
+                    + ", classifiers=" + classifiers
+                    + '}';
+        }
+
     }
 
     public static class DownloadInfo {
@@ -151,6 +184,17 @@ public class Library {
         public String getUrl() {
             return this.url;
         }
+
+        @Override
+        public String toString() {
+            return "DownloadInfo{"
+                    + "path='" + path + '\''
+                    + ", sha1='" + sha1 + '\''
+                    + ", size=" + size
+                    + ", url='" + url + '\''
+                    + '}';
+        }
+
     }
 
 }

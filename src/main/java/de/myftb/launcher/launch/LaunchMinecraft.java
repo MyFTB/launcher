@@ -83,10 +83,45 @@ public class LaunchMinecraft {
                 .collect(Collectors.toList());
 
         List<Library> joinedLibs = new ArrayList<>(modpackLibs);
-        minecraftManifest.getLibraries().stream()
-                .filter(library -> joinedLibs.stream().noneMatch(lib -> lib.getArtifactGroup().equals(library.getArtifactGroup())
-                        && lib.getArtifactName().equals(library.getArtifactName())))
-                .forEach(joinedLibs::add);
+        minecraftManifest.getLibraries().forEach(library -> {
+            Optional<Library> sameLib = joinedLibs.stream()
+                    .filter(lib -> lib.getArtifactGroup().equals(library.getArtifactGroup())
+                            && lib.getArtifactName().equals(library.getArtifactName())).findFirst();
+
+            if (sameLib.isPresent()) {
+                if (sameLib.get().getArtifactVersion().equals(library.getArtifactVersion())) {
+                    if (library.getDownloads() != null) {
+                        if (sameLib.get().getDownloads() == null) {
+                            sameLib.get().setDownloads(library.getDownloads());
+                        } else {
+                            if (sameLib.get().getDownloads().getArtifact() == null) {
+                                sameLib.get().getDownloads().setArtifact(library.getDownloads().getArtifact());
+                            }
+
+                            if (library.getDownloads().getClassifiers() != null) {
+                                if (sameLib.get().getDownloads().getClassifiers() == null) {
+                                    sameLib.get().getDownloads().setClassifiers(library.getDownloads().getClassifiers());
+                                } else {
+                                    sameLib.get().getDownloads().getClassifiers().putAll(library.getDownloads().getClassifiers());
+                                }
+                            }
+                        }
+                    }
+
+                    if (library.getNatives() != null) {
+                        if (sameLib.get().getNatives() == null) {
+                            sameLib.get().setNatives(library.getNatives());
+                        } else {
+                            sameLib.get().getNatives().putAll(library.getNatives());
+                        }
+                    }
+                }
+            } else {
+                joinedLibs.add(library);
+            }
+        });
+
+        joinedLibs.addAll(LaunchMinecraft.getAdditionalLibraries(modpackManifest, minecraftManifest));
 
         return joinedLibs;
     }
@@ -112,16 +147,9 @@ public class LaunchMinecraft {
                 clientDownload.getSha1(),
                 new File(Launcher.getInstance().getSaveSubDirectory("versions"), minecraftManifest.getId() + ".jar"))));
 
-        // Minecraft Libraries
+        // Alle Libraries: Minecraft, Modpack, Launcherfeatures
         tasks.addAll(LaunchMinecraft.getAllLibraries(modpackManifest, minecraftManifest).stream()
-                .flatMap(libary -> libary.getDownloadables().stream())
-                .map(DownloadCallable::new)
-                .collect(Collectors.toList()));
-
-        // Zusätzliche Libraries (Launcherfeatures oä.)
-        tasks.addAll(LaunchMinecraft.getAdditionalLibraries(modpackManifest, minecraftManifest).stream()
-                .flatMap(libary -> libary.getDownloadables().stream())
-                .map(DownloadCallable::new)
+                .flatMap(libary -> libary.getLibraryDownloads().stream())
                 .collect(Collectors.toList()));
 
         // Asset Index
@@ -181,7 +209,6 @@ public class LaunchMinecraft {
         return success;
     }
 
-    //TODO MC 1.8 launcht nicht richtig
     public static void launch(ModpackManifest modpackManifest, UserAuthentication userAuthentication) throws IOException, InterruptedException {
         if (LaunchMinecraft.running) {
             throw new IllegalStateException("Es läuft bereits ein Modpack");
@@ -204,7 +231,9 @@ public class LaunchMinecraft {
         File nativesDir = new File(Launcher.getInstance().getSaveSubDirectory("temp"), String.valueOf(System.currentTimeMillis()));
         nativesDir.mkdirs();
 
-        minecraftManifest.getLibraries().stream()
+        List<Library> libraries = LaunchMinecraft.getAllLibraries(modpackManifest, minecraftManifest);
+
+        libraries.stream()
                 .filter(library -> library.getNatives() != null)
                 .forEach(library -> {
                     if (library.getNatives().containsKey(Platform.getPlatform().name().toLowerCase())) {
@@ -264,8 +293,6 @@ public class LaunchMinecraft {
         }
 
         jvmArguments.addAll(Arrays.asList(Launcher.getInstance().getConfig().getJvmArgs().split(" ")));
-
-        List<Library> libraries = LaunchMinecraft.getAllLibraries(modpackManifest, minecraftManifest);
 
         File librariesDir = Launcher.getInstance().getSaveSubDirectory("libraries");
         List<String> classpath = libraries.stream()
