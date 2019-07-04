@@ -49,8 +49,8 @@ export default class AvailablePacks extends React.Component {
         });
     }
 
-    onModpackClick(index) {
-        this.installPack(index);
+    onModpackClick(pack) {
+        this.installPack(pack);
     }
 
     acceptInstallationDialog() {
@@ -61,9 +61,7 @@ export default class AvailablePacks extends React.Component {
         }
     }
 
-    installPack(index, features) {
-        let pack = {};
-        Object.assign(pack, this.state.packages[index]);
+    installPack(pack, features) {
         if (features) {
             pack.selected_features = features;
         }
@@ -71,13 +69,13 @@ export default class AvailablePacks extends React.Component {
         window.launcher.loading(true);
         window.launcher.sendIpc('install_modpack', pack, window.launcher.generalFeatureCallback('install_modpack', data => {
             if (data.installing) {
-                window.launcher.setState({installationStatus: {progress: data.installing, pack: this.state.packages[index]}});
+                window.launcher.setState({installationStatus: {progress: data.installing, pack: pack}});
             } else if (data.installed) {
                 let success = data.success;
                 window.launcher.setState({installationStatus: false});
                 this.setState({changeToInstalled: success});
                 window.launcher.showDialog(false, [
-                    <p>{success ? 'Das Modpack ' + this.state.packages[index].title + ' wurde erfolgreich installiert' : 'Bei der Installation von ' + this.state.packages[index].title + ' sind Fehler aufgetreten'}</p>,
+                    <p>{success ? 'Das Modpack ' + pack.title + ' wurde erfolgreich installiert' : 'Bei der Installation von ' + pack.title + ' sind Fehler aufgetreten'}</p>,
                     <button className="btn" onClick={this.acceptInstallationDialog}>OK</button>
                 ]);
             }
@@ -100,7 +98,7 @@ export default class AvailablePacks extends React.Component {
                 <div className="packs">
                     {this.state.packages && (
                         this.state.packages.filter(PackSearch.packFilter(this.state)).map((pack, i) => {
-                            return <Modpack key={i} pack={pack} onClick={this.onModpackClick.bind(this, i)}></Modpack>
+                            return <Modpack key={i} pack={pack} onClick={this.onModpackClick.bind(this, pack)}></Modpack>
                         })
                     )}
                 </div>

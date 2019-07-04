@@ -54,8 +54,8 @@ export default class InstalledPacks extends React.Component {
         window.installed_packs = null;
     }
 
-    onModpackClick(index) {
-        window.launcher.launchModpack(this.state.packages[index]);
+    onModpackClick(pack) {
+        window.launcher.launchModpack(pack);
     }
 
     onSearch(name, version) {
@@ -70,7 +70,7 @@ export default class InstalledPacks extends React.Component {
                 <div className="packs">
                     {this.state.packages && (
                         this.state.packages.filter(PackSearch.packFilter(this.state)).map((pack, i) => {
-                            return <Modpack key={i} pack={pack} packinstalled="true" onClick={this.onModpackClick.bind(this, i)}></Modpack>
+                            return <Modpack key={i} pack={pack} packinstalled="true" onClick={this.onModpackClick.bind(this, pack)}></Modpack>
                         })
                     )}
                 </div>
