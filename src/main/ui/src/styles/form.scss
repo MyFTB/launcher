@@ -16,6 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+select, input {
+    padding: 10px;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 8px;
+    background-color: #222;
+    outline: none;
+    color: #eee;
+    font-size: 12px;
+    font-family: 'LatoWeb';
+}
+
 .form-group {
     width: 100%;
 
@@ -32,15 +44,7 @@
     }
 
     input {
-        box-sizing: border-box;
-        padding: 10px;
-        border: none;
-        border-radius: 8px;
-        background-color: #222;
-        outline: none;
-        color: #eee;
         width: 100%;
-        font-size: 12px;
     }
 
     input[type=range] {
@@ -50,6 +54,10 @@
         outline: none;
         padding: 0;
         height: 6px;
+
+        &.with-text {
+            width: calc(100% - 80px);
+        }
 
         &::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -61,6 +69,13 @@
             cursor: pointer;
             content: 'Hello World';
         }
+    }
+
+    input[type=text].range-text {
+        width: 60px;
+        float: right;
+        vertical-align: top;
+        margin-top: -7px;
     }
 }
 

@@ -19,12 +19,13 @@
 import React from 'react';
 
 import RangeInput from './base/RangeInput.react';
+import ToggleSwitch from './base/ToggleSwitch.react';
 
 export default class Settings extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {minMemory: 0, maxMemory: 0, gameWidth: 0, gameHeight: 0, jvmArgs: '', packKey: '', installationDir: '', metricsEnabled: false, loaded: false};
+        this.state = {minMemory: 0, maxMemory: 0, gameWidth: 0, gameHeight: 0, jvmArgs: '', packKey: '', installationDir: '', metricsEnabled: false, allowWebstart: false, loaded: false};
         this.doInstallDirSelection = this.doInstallDirSelection.bind(this);
     }
 
@@ -90,9 +91,13 @@ export default class Settings extends React.Component {
                     <input id="packKey" type="text" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.packKey} readOnly={!this.state.loaded}></input>
                 </div>
                 <div className="form-group">
-                    <p>Speicherverzeichnis</p>
+                    <p>Benutzerdefiniertes Speicherverzeichnis</p>
                     <input id="installationDir" ref="installationDir" type="text" className="dir-chooser" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.installationDir} readOnly={!this.state.loaded}></input>
                     <button onClick={this.doInstallDirSelection}>...</button>
+                </div>
+                <div className="form-group">
+                    <p>Webstart aktivieren</p>
+                    <ToggleSwitch id="allowWebstart" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultChecked={this.state.allowWebstart} readOnly={!this.state.loaded}></ToggleSwitch>
                 </div>
             </div>
         )

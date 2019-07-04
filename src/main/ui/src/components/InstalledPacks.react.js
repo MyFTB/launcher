@@ -19,12 +19,18 @@
 import React from 'react';
 
 import Modpack from './base/Modpack.react';
+import PackSearch from './base/PackSearch.react';
 
 export default class InstalledPacks extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {packages: false};
+        this.state = {
+            packages: false, versions: [], 
+            nameSearch: false, versionSearch: false
+        };
+
+        this.onSearch = this.onSearch.bind(this);
     }
 
     componentDidMount() {
@@ -36,7 +42,11 @@ export default class InstalledPacks extends React.Component {
             if (err) {
                 return window.launcher.showDialog(true, <p>{err}</p>);
             }
-            this.setState({ packages: JSON.parse(data.packages).sort((a, b) => a.title.localeCompare(b.title)) });
+            let packs = JSON.parse(data.packages);
+            this.setState({
+                packages: packs.sort((a, b) => a.title.localeCompare(b.title)), 
+                versions: packs.map(pack => pack.gameVersion).filter(PackSearch.distinct).sort()
+            });
         });
     }
 
@@ -48,12 +58,18 @@ export default class InstalledPacks extends React.Component {
         window.launcher.launchModpack(this.state.packages[index]);
     }
 
+    onSearch(name, version) {
+        this.setState({nameSearch: name, versionSearch: version});
+    }
+
     render() {
         return (
             <div>
+                <PackSearch versions={this.state.versions} searchCallback={this.onSearch}/>
+
                 <div className="packs">
                     {this.state.packages && (
-                        this.state.packages.map((pack, i) => {
+                        this.state.packages.filter(PackSearch.packFilter(this.state)).map((pack, i) => {
                             return <Modpack key={i} pack={pack} packinstalled="true" onClick={this.onModpackClick.bind(this, i)}></Modpack>
                         })
                     )}

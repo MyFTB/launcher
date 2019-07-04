@@ -54,6 +54,9 @@ class Launcher extends React.Component {
         this.uploadLog = this.uploadLog.bind(this);
         this.killMinecraft = this.killMinecraft.bind(this);
 
+        this.onInstallDialogClick = this.onInstallDialogClick.bind(this);
+        this.cancelDownload = this.cancelDownload.bind(this);
+
         this.listenIpc('logged_in', (err, data) => {
             if (!err) {
                 this.setState({profile: data});
@@ -66,7 +69,24 @@ class Launcher extends React.Component {
         });
 
         this.listenIpc('launch_pack', (err, data) => {
-            this.launchModpack(data);
+            let pack = JSON.parse(data.pack);
+            if (data.install) {
+                this.loading(true);
+                this.sendIpc('install_modpack', pack, this.generalFeatureCallback('install_modpack', data => {
+                    if (data.installing) {
+                        this.setState({installationStatus: {progress: data.installing, pack: pack}});
+                    } else if (data.installed) {
+                        let success = data.success;
+                        this.setState({installationStatus: false});
+                        this.showDialog(false, [
+                            <p>{success ? 'Das Modpack ' + pack.title + ' wurde erfolgreich installiert' : 'Bei der Installation von ' + pack.title + ' sind Fehler aufgetreten'}</p>,
+                            <button className="btn" onClick={this.onInstallDialogClick(pack, success)}>OK</button>
+                        ]);
+                    }
+                }));
+            } else {
+                this.launchModpack(pack);
+            }
         });
 
         this.listenIpc('welcome_message', (err, data) => {
@@ -93,6 +113,20 @@ class Launcher extends React.Component {
 
     loading(state) {
         this.setState({loading: state});
+    }
+
+    onInstallDialogClick(pack, success) {
+        return () => {
+            this.resetDialog();
+
+            if (success) {
+                this.launchModpack(pack);
+            }
+        }
+    }
+
+    cancelDownload() {
+        this.sendIpc('cancel_download', {});
     }
 
     /* ============================================================ Dialog ============================================================ */
@@ -318,6 +352,7 @@ class Launcher extends React.Component {
                             <h3>Installiere Modpack: {this.state.installationStatus.pack.title}</h3>
                             <p>{this.state.installationStatus.progress.total} Aufgaben gesamt, {this.state.installationStatus.progress.finished} abgeschlossen, {this.state.installationStatus.progress.failed} fehlgeschlagen</p>
                             <ProgressBar data-progress={Math.round(this.state.installationStatus.progress.finished / this.state.installationStatus.progress.total * 100)}></ProgressBar>
+                            <button className="btn" onClick={this.cancelDownload}>Abbrechen</button>
                         </div>
                     </div>
                 )}

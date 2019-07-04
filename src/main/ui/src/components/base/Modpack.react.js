@@ -33,14 +33,6 @@ export default class Modpack extends React.Component {
         }
     }
 
-    getLastUpdate() {
-        return this.props.pack.version.split('_').reverse()
-            .map((v, i) => i == 0
-                ? v.split('-').slice(0, 2).join(':')
-                : v.split('-').reverse().join('.'))
-            .join(' ');
-    }
-
     onContextMenu(e) {
         if (this.props.packinstalled) {
             e.preventDefault();

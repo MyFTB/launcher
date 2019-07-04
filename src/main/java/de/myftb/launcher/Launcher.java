@@ -27,7 +27,6 @@ import de.myftb.launcher.cef.gui.CefFrame;
 import de.myftb.launcher.cef.ipc.TopicMessageHandler;
 import de.myftb.launcher.integration.DiscordIntegration;
 import de.myftb.launcher.integration.ModpackWebstart;
-import de.myftb.launcher.launch.LaunchHelper;
 import de.myftb.launcher.launch.LaunchMinecraft;
 import de.myftb.launcher.launch.ManifestHelper;
 import de.myftb.launcher.models.launcher.LauncherConfig;
@@ -159,6 +158,7 @@ public class Launcher {
         this.ipcHandler.listenAsync("request_console", this.ipcTopics::onRequestConsole);
         this.ipcHandler.listenAsync("upload_log", this.ipcTopics::onUploadLog);
         this.ipcHandler.listenAsync("kill_minecraft", this.ipcTopics::onKillMinecraft);
+        this.ipcHandler.listenAsync("cancel_download", this.ipcTopics::onCancelDownload);
     }
 
     /**
@@ -186,7 +186,7 @@ public class Launcher {
             try {
                 ModpackManifestList.ModpackManifestReference reference = this.getRemotePacks().getPackByName(pack).orElse(null);
                 if (reference != null) {
-                    this.ipcHandler.sendString("launch_pack", LaunchHelper.mapper.writeValueAsString(reference));
+                    this.ipcHandler.send("launch_pack", reference.getWebstart());
                 }
             } catch (IOException e) {
                 Launcher.log.warn("Fehler beim Starten von Modpack", e);

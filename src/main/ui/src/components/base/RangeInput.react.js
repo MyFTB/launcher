@@ -24,29 +24,42 @@ export default class RangeInput extends React.Component {
         super(props);
         this.state = {value: 0};
         this.onValChanged = this.onValChanged.bind(this);
+        this.onTextChanged = this.onTextChanged.bind(this);
     }
 
     componentDidMount() {
-        this.updateBubble();
+        this.updateBubble(true);
     }
 
     onValChanged() {
-        this.updateBubble();
+        this.updateBubble(true);
     }
 
-    updateBubble() {
+    onTextChanged() {
+        let intVal = parseInt(this.refs.text.value);
+        if (intVal !== NaN && this.refs.slider.value !== intVal && intVal >= this.refs.slider.min && intVal <= this.refs.slider.max) {
+            this.refs.slider.value = intVal;
+            this.updateBubble(false);
+        }
+    }
+
+    updateBubble(updateText) {
         let slider = this.refs.slider;
         let percentage = (slider.value - slider.min) / (slider.max - slider.min);
         let offset = 18 * percentage + 9 + 16;
-        this.refs.bubble.style.left = `calc(${percentage * 100}% - ${offset}px)`;
+        this.refs.bubble.style.left = `${percentage * slider.clientWidth - offset}px`
         this.setState({value: slider.value});
+        if (updateText) {
+            this.refs.text.value = slider.value;
+        }
     }
 
     render() {
         return (
             <div className="range">
-                <input type="range" ref="slider" {...this.props} onChange={this.onValChanged}></input>
+                <input type="range" ref="slider" className="with-text" {...this.props} onChange={this.onValChanged}></input>
                 <span ref="bubble">{this.state.value}</span>
+                <input type="text" ref="text" className="range-text" onChange={this.onTextChanged}></input>
             </div>
         )
     }

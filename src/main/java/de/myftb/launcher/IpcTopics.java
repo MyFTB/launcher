@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -123,9 +122,9 @@ public class IpcTopics {
 
     void onOpenUrl(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
         try {
-            URL url = new URL(data.get("url").getAsString());
+            URI url = new URI(data.get("url").getAsString());
             if (url.getHost().endsWith("myftb.de") && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                Desktop.getDesktop().browse(url.toURI());
+                Desktop.getDesktop().browse(url);
             }
         } catch (Exception e) {
             callback.failure("URL kann nicht gelesen werden");
@@ -424,7 +423,7 @@ public class IpcTopics {
                 String pasteUrl = HastebinHelper.post(log.getBytes(StandardCharsets.UTF_8));
                 Desktop.getDesktop().browse(new URI(pasteUrl));
                 callback.success(new JsonObject());
-            } catch (IOException | URISyntaxException e) {
+            } catch (Exception e) {
                 callback.failure("Der Log konnte nicht hochgeladen werden");
                 IpcTopics.log.warn("Log konnte nicht hochgeladen werden", e);
             }
@@ -435,6 +434,10 @@ public class IpcTopics {
 
     void onKillMinecraft(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
         LaunchMinecraft.killMinecraft();
+    }
+
+    void onCancelDownload(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        LaunchMinecraft.cancelDownload = true;
     }
 
 }

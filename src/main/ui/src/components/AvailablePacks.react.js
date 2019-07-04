@@ -19,16 +19,19 @@
 import React from 'react';
 
 import Modpack from './base/Modpack.react';
+import PackSearch from './base/PackSearch.react';
 
 export default class AvailablePacks extends React.Component {
 
     constructor(props) {
         super(props);
         this.state = { 
-            packages: false, dialog: false, changeToInstalled: false 
+            packages: false, dialog: false, changeToInstalled: false, versions: [],
+            nameSearch: false, versionSearch: false
         };
 
         this.acceptInstallationDialog = this.acceptInstallationDialog.bind(this);
+        this.onSearch = this.onSearch.bind(this);
     }
 
     componentDidMount() {
@@ -38,7 +41,11 @@ export default class AvailablePacks extends React.Component {
             if (err) {
                 return window.launcher.showDialog(true, <p>{err}</p>);
             }
-            this.setState({packages: data.packages.sort((a, b) => a.title.localeCompare(b.title))});
+            
+            this.setState({
+                packages: data.packages.sort((a, b) => a.title.localeCompare(b.title)),
+                versions: data.packages.map(pack => pack.gameVersion).filter(PackSearch.distinct).sort()
+            });
         });
     }
 
@@ -68,7 +75,7 @@ export default class AvailablePacks extends React.Component {
             } else if (data.installed) {
                 let success = data.success;
                 window.launcher.setState({installationStatus: false});
-                this.setState({status: false, changeToInstalled: success});
+                this.setState({changeToInstalled: success});
                 window.launcher.showDialog(false, [
                     <p>{success ? 'Das Modpack ' + this.state.packages[index].title + ' wurde erfolgreich installiert' : 'Bei der Installation von ' + this.state.packages[index].title + ' sind Fehler aufgetreten'}</p>,
                     <button className="btn" onClick={this.acceptInstallationDialog}>OK</button>
@@ -77,12 +84,22 @@ export default class AvailablePacks extends React.Component {
         }));
     }
 
+    onSearch(name, version) {
+        this.setState({nameSearch: name, versionSearch: version});
+    }
+
+    packFilter(pack) {
+        return (!this.state.nameSearch || pack.title.toLowerCase().includes(this.state.nameSearch)) && (!this.state.versionSearch || pack.gameVersion === this.state.versionSearch);
+    }
+
     render() {
         return (
             <div>
+                <PackSearch versions={this.state.versions} searchCallback={this.onSearch}/>
+
                 <div className="packs">
                     {this.state.packages && (
-                        this.state.packages.map((pack, i) => {
+                        this.state.packages.filter(PackSearch.packFilter(this.state)).map((pack, i) => {
                             return <Modpack key={i} pack={pack} onClick={this.onModpackClick.bind(this, i)}></Modpack>
                         })
                     )}

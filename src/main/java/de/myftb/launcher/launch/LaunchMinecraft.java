@@ -62,12 +62,8 @@ import org.slf4j.LoggerFactory;
 
 public class LaunchMinecraft {
     private static final Logger log = LoggerFactory.getLogger(LaunchMinecraft.class);
-    private static final ExecutorService downloadThreadPool = Executors
-            .newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors(), runnable -> {
-                Thread thread = new Thread(runnable);
-                thread.setDaemon(true);
-                return thread;
-            });
+    private static ExecutorService downloadThreadPool;
+    public static boolean cancelDownload = false;
 
     private static final LogCollector logCollector = new LogCollector();
     private static boolean running = false;
@@ -188,18 +184,34 @@ public class LaunchMinecraft {
             }
         }
 
+        if (LaunchMinecraft.downloadThreadPool == null || LaunchMinecraft.downloadThreadPool.isShutdown()) {
+            LaunchMinecraft.downloadThreadPool = Executors
+                    .newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors(), runnable -> {
+                        Thread thread = new Thread(runnable);
+                        thread.setDaemon(true);
+                        return thread;
+                    });
+        }
+        LaunchMinecraft.cancelDownload = false;
+
         ExecutorCompletionService<File> completionService = new ExecutorCompletionService<>(LaunchMinecraft.downloadThreadPool);
         tasks.forEach(completionService::submit);
 
         int failed = 0;
         for (int i = 0; i < tasks.size(); i++) {
-            try {
-                completionService.take().get();
-            } catch (InterruptedException | ExecutionException e) {
-                LaunchMinecraft.log.warn("Fehler beim Herunterladen von Datei", e);
-                failed++;
+            if (LaunchMinecraft.cancelDownload) {
+                LaunchMinecraft.downloadThreadPool.shutdownNow();
+                failed = tasks.size() - i;
+                break;
+            } else {
+                try {
+                    completionService.take().get();
+                } catch (InterruptedException | ExecutionException e) {
+                    LaunchMinecraft.log.warn("Fehler beim Herunterladen von Datei", e);
+                    failed++;
+                }
+                statusListener.progressChange(tasks.size(), i + 1, failed);
             }
-            statusListener.progressChange(tasks.size(), i + 1, failed);
         }
 
         LaunchMinecraft.log.info("Modpack " + modpackManifest.getTitle() + " installiert");

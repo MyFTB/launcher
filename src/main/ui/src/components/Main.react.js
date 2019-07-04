@@ -57,6 +57,7 @@ export default class Main extends React.Component {
                 <h2>Willkommen{this.state.username && ' ' + this.state.username}!</h2>
                 <ul>
                     <li><ExternalLink data-link="https://myftb.de">Webseite</ExternalLink></li>
+                    <li><ExternalLink data-link={"ts3server://ts.myftb.de?password=myftbtspw" + (this.state.username ? "&nickname=" + this.state.username : "")}>Teamspeak</ExternalLink></li>
                     <li><ExternalLink data-link="https://discord.myftb.de">Discord</ExternalLink></li>
                     <li><ExternalLink data-link="https://forum.myftb.de">Forum</ExternalLink></li>
                     <li><ExternalLink data-link="https://torch.myftb.de">Torch</ExternalLink></li>

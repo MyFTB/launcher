@@ -84,6 +84,25 @@
     }
 }
 
+.pack-search-bar {
+    margin-top: -15px;
+    margin-bottom: 5px;
+}
+
+.pack-search {
+    margin: 0 10px;
+    float: right;
+    
+    input {
+        width: 200px;
+        margin-right: 10px;
+    }
+
+    select {
+        width: 100px;
+    }
+}
+
 .feature {
     margin-top: 10px;
 

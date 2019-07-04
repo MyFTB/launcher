@@ -19,6 +19,10 @@
 package de.myftb.launcher.models.modpacks;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.JsonObject;
+import de.myftb.launcher.launch.LaunchHelper;
+import de.myftb.launcher.launch.ManifestHelper;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +51,7 @@ public class ModpackManifestList {
         private String title;
         private String version;
         private String location;
+        private String gameVersion;
 
         public String getName() {
             return this.name;
@@ -62,6 +67,17 @@ public class ModpackManifestList {
 
         public String getLocation() {
             return this.location;
+        }
+
+        public String getGameVersion() {
+            return this.gameVersion;
+        }
+
+        public JsonObject getWebstart() throws JsonProcessingException {
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("pack", LaunchHelper.mapper.writeValueAsString(this));
+            jsonObject.addProperty("install", ManifestHelper.getInstalledModpacks().stream().noneMatch(pack -> pack.getName().equals(this.name)));
+            return jsonObject;
         }
     }
 
