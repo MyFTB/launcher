@@ -1,0 +1,108 @@
+.autoconfig-container {
+    box-sizing: border-box;
+    border-radius: 8px;
+    background-color: #222;
+    height: 250px;
+    
+    .autoconfig-list {
+        height: 218px;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        overflow-y: scroll;
+
+        > ul {
+            margin: 0 0 16px 0;
+            > li {
+                padding: 16px 8px 0 8px;
+
+                display: flex;
+                align-items: center;
+
+                .setting-value {
+                    width: 30%;
+                    margin-left: auto;
+
+                    > * {
+                        width: 100%;
+                        background-color: #1e1e1e;
+                    }
+
+                    &.switch-container {
+                        width: 52px;
+                    }
+                }
+
+                &::after {
+                    content: ' ';
+                    clear: both;
+                    display: table;
+                }
+            }
+        }
+    }
+
+    .autoconfig-toolbar {
+        height: 32px;
+        width: 100%;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+        background:#1e1e1e;
+        position: relative;
+
+        > ul {
+            position: absolute;
+            right: 8px;
+            top: 4px;
+            cursor: pointer;
+            display: inline;
+            margin: 0;
+
+            > li {
+                display: inline-block;
+                margin-left: 16px;
+            }
+        }
+
+        svg {
+            font-size: 24px;
+            
+            &:hover {
+                color: #83da38;
+            }
+        }
+    }
+
+    .autoconfig-popover {
+        box-sizing: border-box;
+        border-radius: 8px;
+        background-color: #111;
+        padding: 12px;
+        height: 200px;
+        width: 250px;
+        display: none;
+        position: absolute;
+
+        &.active {
+            display: block;
+        }
+
+        > ul {
+            margin: 0;
+            overflow-y: scroll;
+            height: 100%;
+
+            > li {
+                padding: 4px 0;
+                cursor: pointer;
+                &:hover {
+                    color: #83da38;
+                }
+
+                &.disabled {
+                    color: gray;
+                    cursor: unset;
+                }
+            }
+        }
+    }
+}

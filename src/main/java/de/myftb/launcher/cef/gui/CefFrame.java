@@ -69,25 +69,16 @@ public class CefFrame extends JFrame {
     }
 
     public static CefApp getApp() {
-        AtomicReference<CefApp> cefAppRef = new AtomicReference<>(null);
-
-        try {
-            SwingUtilities.invokeAndWait(() -> {
-                if (!CefApp.startup()) {
-                    return;
-                }
-
-                CefSettings settings = new CefSettings();
-                settings.user_agent = "MyFTB Launcher";
-                settings.windowless_rendering_enabled = false;
-                cefAppRef.set(CefApp.getInstance(settings));
-                CefApp.addAppHandler(new LauncherCefAppHandler());
-            });
-        } catch (InterruptedException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+        if (!CefApp.startup()) {
+            return null;
         }
 
-        return cefAppRef.get();
+        CefSettings settings = new CefSettings();
+        settings.user_agent = "MyFTB Launcher";
+        settings.windowless_rendering_enabled = false;
+        CefApp cefApp = CefApp.getInstance(settings);
+        CefApp.addAppHandler(new LauncherCefAppHandler());
+        return cefApp;
     }
 
 }

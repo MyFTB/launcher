@@ -59,12 +59,16 @@ def downloadPlatformDependent(String name, File baseDir) {
 }
 
 task downloadJre {
+    group = 'Launcher'
+
     doLast {
         downloadPlatformDependent("jre", project.file("run/runtime"))
     }
 }
 
 task downloadCef {
+    group = 'Launcher'
+
     doLast {
         downloadPlatformDependent("jcef", project.file("run/jcef"))
     }

@@ -440,4 +440,22 @@ public class IpcTopics {
         LaunchMinecraft.cancelDownload = true;
     }
 
+    void onRequestAutoconfigs(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        JsonArray configs = new JsonArray();
+
+        this.launcher.getAutoConfigManager().getKnownOptions().forEach(option -> {
+            JsonObject optionObject = new JsonObject();
+            optionObject.addProperty("id", option);
+            optionObject.addProperty("name", this.launcher.getAutoConfigManager().getTranslation(option).orElse(option));
+            optionObject.addProperty("type", this.launcher.getAutoConfigManager().getType(option).map(Class::getSimpleName).orElse("").toLowerCase());
+            configs.add(optionObject);
+        });
+
+        JsonObject response = new JsonObject();
+        response.add("configs", configs);
+        response.add("types", this.launcher.getAutoConfigManager().getTypes());
+        response.add("constraints", this.launcher.getAutoConfigManager().getConstraints());
+        callback.success(response);
+    }
+
 }

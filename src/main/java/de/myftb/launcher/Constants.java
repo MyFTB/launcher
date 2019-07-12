@@ -28,8 +28,8 @@ public class Constants {
     public static final String pasteTarget = "https://paste.myftb.de";
     public static final String postsApi = "https://myftb.de/api/posts";
 
-    public static final int connectTimeout = 5000;
-    public static final int socketTimeout = 30000;
+    public static final int connectTimeout = 30000;
+    public static final int socketTimeout = 90000;
 
     public static final String[] repositories = new String[] {
             "https://libraries.minecraft.net/",

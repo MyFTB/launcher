@@ -37,6 +37,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.HttpResponse;
@@ -110,6 +112,14 @@ public class LaunchHelper {
         }
 
         return body;
+    }
+
+    public static ExecutorService getNewDaemonThreadPool() {
+        return Executors.newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors(), runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setDaemon(true);
+            return thread;
+        });
     }
 
 }

@@ -21,6 +21,7 @@ package de.myftb.launcher;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.exceptions.AuthenticationException;
 
+import de.myftb.launcher.autoconfig.AutoConfigManager;
 import de.myftb.launcher.cef.BlockExternalRequestHandler;
 import de.myftb.launcher.cef.LauncherContextMenuHandler;
 import de.myftb.launcher.cef.gui.CefFrame;
@@ -53,7 +54,6 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.cef.CefApp;
 import org.cef.CefClient;
-import org.cef.OS;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefMessageRouter;
 import org.slf4j.Logger;
@@ -66,11 +66,13 @@ public class Launcher {
     private static Launcher instance;
 
     private final CefApp cefApp;
-    private final CefBrowser cefBrowser;
-    private final JFrame window;
+    private final CefClient cefClient;
+    private CefBrowser cefBrowser;
+    private JFrame window;
     private final TopicMessageHandler ipcHandler;
     private final IpcTopics ipcTopics;
-    private final DiscordIntegration discordIntegration;
+    private DiscordIntegration discordIntegration;
+    private AutoConfigManager autoConfigManager;
     private ModpackWebstart webstartHandler;
     private LauncherConfig config;
     private ModpackManifestList modpackList;
@@ -102,20 +104,22 @@ public class Launcher {
         Launcher.log.info("Javainstallation: {}", System.getProperty("java.home"));
         Launcher.log.info("Entwicklungsversion: {}", Launcher.development);
 
-        CefClient client = this.cefApp.createClient();
-        client.addRequestHandler(new BlockExternalRequestHandler());
-        client.addContextMenuHandler(new LauncherContextMenuHandler(Launcher.development));
+        this.cefClient = this.cefApp.createClient();
+        this.cefClient.addRequestHandler(new BlockExternalRequestHandler());
+        this.cefClient.addContextMenuHandler(new LauncherContextMenuHandler(Launcher.development));
 
         CefMessageRouter.CefMessageRouterConfig routerConfig = new CefMessageRouter.CefMessageRouterConfig();
         routerConfig.jsQueryFunction = "ipcQuery";
         routerConfig.jsCancelFunction = "cancelIpcQuery";
         CefMessageRouter ipcRouter = CefMessageRouter.create(routerConfig);
         ipcRouter.addHandler(this.ipcHandler = new TopicMessageHandler(), true);
-        client.addMessageRouter(ipcRouter);
+        this.cefClient.addMessageRouter(ipcRouter);
         this.ipcTopics = new IpcTopics(this, this.ipcHandler);
         this.setupIpcCommunication();
+    }
 
-        this.cefBrowser = client.createBrowser(Launcher.development ? "http://127.0.0.1:8080" : "launcher://launcher/", OS.isLinux(), false);
+    private void init() throws Exception {
+        this.cefBrowser = this.cefClient.createBrowser(Launcher.development ? "http://127.0.0.1:8080" : "launcher://launcher/", false, false);
 
         this.window = new CefFrame(this.cefBrowser);
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -138,6 +142,9 @@ public class Launcher {
                 Launcher.log.warn("Fehler beim Aktivieren von Webstart Handler", e);
             }
         }
+
+        this.autoConfigManager = new AutoConfigManager();
+        //this.autoConfigManager.readAll();
     }
 
     private void setupIpcCommunication() {
@@ -159,6 +166,7 @@ public class Launcher {
         this.ipcHandler.listenAsync("upload_log", this.ipcTopics::onUploadLog);
         this.ipcHandler.listenAsync("kill_minecraft", this.ipcTopics::onKillMinecraft);
         this.ipcHandler.listenAsync("cancel_download", this.ipcTopics::onCancelDownload);
+        this.ipcHandler.listenAsync("request_autoconfigs", this.ipcTopics::onRequestAutoconfigs);
     }
 
     /**
@@ -332,6 +340,10 @@ public class Launcher {
         return this.discordIntegration;
     }
 
+    AutoConfigManager getAutoConfigManager() {
+        return this.autoConfigManager;
+    }
+
     /**
      * Bringt das Hauptfenster in den Vordergrund.
      */
@@ -370,6 +382,7 @@ public class Launcher {
         }
 
         Launcher.instance = new Launcher(args);
+        Launcher.instance.init();
     }
 
     public static Launcher getInstance() {

@@ -168,8 +168,38 @@ pmd {
 	ruleSets = ['java-basic', 'java-braces']
 }
 
+task npmInit(type: Exec){
+	group = 'Launcher'
+	workingDir "$projectDir/src/main/ui"
+
+	if (os.contains('windows')) {
+		commandLine 'cmd', '/c', 'npm', 'i'
+	} else {
+		commandLine 'npm', 'i'
+	}
+}
+
+task runDevServer(type: Exec){
+	group = 'Launcher'
+	workingDir "$projectDir/src/main/ui"
+
+	if (os.contains('windows')) {
+		commandLine 'cmd', '/c', 'npm', 'run-script', 'devserver'
+	} else {
+		commandLine 'npm', 'run-script', 'devserver'
+	}
+}
+
+task setup {
+	group = 'Launcher'
+	dependsOn 'npmInit'
+	dependsOn 'downloadJre'
+	dependsOn 'downloadCef'
+}
 
 task runLauncher(type: JavaExec) {
+	group = 'Launcher'
+
 	if (os.contains("mac")) {
 		throw new GradleException("Diese Aktion ist unter macOS nicht unterstützt")
 	}
@@ -193,5 +223,3 @@ task runLauncher(type: JavaExec) {
 
 	executable = "${project.file(javaPath)}"
 }
-runLauncher.dependsOn downloadJre
-runLauncher.dependsOn downloadCef

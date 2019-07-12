@@ -20,12 +20,16 @@ import React from 'react';
 
 import RangeInput from './base/RangeInput.react';
 import ToggleSwitch from './base/ToggleSwitch.react';
+import AutoConfig from './base/AutoConfig.react';
 
 export default class Settings extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {minMemory: 0, maxMemory: 0, gameWidth: 0, gameHeight: 0, jvmArgs: '', packKey: '', installationDir: '', metricsEnabled: false, allowWebstart: false, loaded: false};
+        this.state = {
+            minMemory: 0, maxMemory: 0, gameWidth: 0, gameHeight: 0, jvmArgs: '', packKey: '', installationDir: '', metricsEnabled: false, allowWebstart: false, loaded: false, 
+            autoConfigOptions: {configs:[], types: [], constraints: []}
+        };
         this.doInstallDirSelection = this.doInstallDirSelection.bind(this);
     }
 
@@ -38,6 +42,16 @@ export default class Settings extends React.Component {
             }
             data.loaded = true;
             this.setState(data);
+
+            window.launcher.sendIpc('request_autoconfigs', false, (err, data) => {
+                this.setState({
+                    autoConfigOptions: {
+                        configs: data.configs.sort((a, b) => a.name.localeCompare(b.name)),
+                        types: data.types,
+                        constraints: data.constraints
+                    }
+                });
+            });
         });
     }
 
@@ -63,41 +77,50 @@ export default class Settings extends React.Component {
         });
     }
 
+    getOptionAttributes(name) {
+        return {
+            id: name,
+            key: this.state.loaded ? 'loaded' : 'notLoaded',
+            defaultValue: this.state[name],
+            readOnly: !this.state.loaded
+        }
+    }
+
     render() { // key auf jedem Element um eine Neuinitialisierung nach Stateänderung zu erhalten. Siehe https://stackoverflow.com/a/41717743/6431694
         return (
             <div className="settings">
                 <div className="form-group">
                     <p>Minimaler RAM in MB</p>
-                    <RangeInput id="minMemory" min="1024" max="16384" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.minMemory} readOnly={!this.state.loaded}></RangeInput>
+                    <RangeInput {...this.getOptionAttributes('minMemory')} min="1024" max="16384"></RangeInput>
                 </div>
                 <div className="form-group">
                     <p>Maximaler RAM in MB</p>
-                    <RangeInput id="maxMemory" min="1024" max="16384" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.maxMemory} readOnly={!this.state.loaded}></RangeInput>
+                    <RangeInput {...this.getOptionAttributes('maxMemory')} min="1024" max="16384"></RangeInput>
                 </div>
                 <div className="form-group">
                     <p>Java Argumente</p>
-                    <input id="jvmArgs" type="text" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.jvmArgs} readOnly={!this.state.loaded}></input>
+                    <input {...this.getOptionAttributes('jvmArgs')} type="text"></input>
                 </div>
                 <div className="form-group">
                     <p>Breite des Spielfensters in Pixel</p>
-                    <RangeInput id="gameWidth" min="854" max="3840" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.gameWidth} readOnly={!this.state.loaded}></RangeInput>
+                    <RangeInput {...this.getOptionAttributes('gameWidth')} min="854" max="3840"></RangeInput>
                 </div>
                 <div className="form-group">
                     <p>Höhe des Spielfensters in Pixel</p>
-                    <RangeInput id="gameHeight" min="480" max="2160" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.gameHeight} readOnly={!this.state.loaded}></RangeInput>
+                    <RangeInput {...this.getOptionAttributes('gameHeight')} min="480" max="2160"></RangeInput>
                 </div>
                 <div className="form-group">
                     <p>Modpackschlüssel</p>
-                    <input id="packKey" type="text" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.packKey} readOnly={!this.state.loaded}></input>
+                    <input {...this.getOptionAttributes('packKey')} type="text"></input>
                 </div>
                 <div className="form-group">
                     <p>Benutzerdefiniertes Speicherverzeichnis</p>
-                    <input id="installationDir" ref="installationDir" type="text" className="dir-chooser" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultValue={this.state.installationDir} readOnly={!this.state.loaded}></input>
+                    <input {...this.getOptionAttributes('installationDir')} ref="installationDir" type="text" className="dir-chooser"></input>
                     <button onClick={this.doInstallDirSelection}>...</button>
                 </div>
                 <div className="form-group">
                     <p>Webstart aktivieren</p>
-                    <ToggleSwitch id="allowWebstart" key={this.state.loaded ? 'loaded': 'notLoaded'} defaultChecked={this.state.allowWebstart} readOnly={!this.state.loaded}></ToggleSwitch>
+                    <ToggleSwitch {...this.getOptionAttributes('allowWebstart')} defaultChecked={this.state.allowWebstart}></ToggleSwitch>
                 </div>
             </div>
         )

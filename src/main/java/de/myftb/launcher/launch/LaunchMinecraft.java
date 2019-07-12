@@ -185,12 +185,7 @@ public class LaunchMinecraft {
         }
 
         if (LaunchMinecraft.downloadThreadPool == null || LaunchMinecraft.downloadThreadPool.isShutdown()) {
-            LaunchMinecraft.downloadThreadPool = Executors
-                    .newFixedThreadPool(java.lang.Runtime.getRuntime().availableProcessors(), runnable -> {
-                        Thread thread = new Thread(runnable);
-                        thread.setDaemon(true);
-                        return thread;
-                    });
+            LaunchMinecraft.downloadThreadPool = LaunchHelper.getNewDaemonThreadPool();
         }
         LaunchMinecraft.cancelDownload = false;
 

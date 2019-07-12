@@ -38,8 +38,10 @@ import java.lang.management.ManagementFactory;
 import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -65,6 +67,7 @@ public class LauncherConfig {
     @Expose private UserAuthentication profile = null;
     @Expose private boolean allowWebstart = true;
     @Expose private List<String> lastPlayedPacks = new LinkedList<>();
+    @Expose private Map<String, String> autoConfigs = new HashMap<>();
 
     public String getClientToken() {
         return this.clientToken;
@@ -129,6 +132,10 @@ public class LauncherConfig {
         if (this.lastPlayedPacks.size() > 3) {
             ((LinkedList<String>) this.lastPlayedPacks).removeLast();
         }
+    }
+
+    public Map<String, String> getAutoConfigs() {
+        return this.autoConfigs;
     }
 
     public AuthenticationService getAuthenticationService() {

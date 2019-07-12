@@ -1,4 +1,6 @@
 task buildMacosApp {
+    group = 'Launcher'
+
     doLast {
         ant.taskdef(
                 name: 'appbundler',
