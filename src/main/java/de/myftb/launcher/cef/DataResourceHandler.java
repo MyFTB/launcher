@@ -65,11 +65,6 @@ public abstract class DataResourceHandler extends CefResourceHandlerAdapter {
         }
         response.setStatus(this.data.length > 0 ? 200 : 404);
         responseLength.set(this.data.length);
-
-        Map<String, String> headers = new HashMap<>();
-        response.getHeaderMap(headers);
-        headers.put("Access-Control-Allow-Origin", "*");
-        response.setHeaderMap(headers);
     }
 
     @Override

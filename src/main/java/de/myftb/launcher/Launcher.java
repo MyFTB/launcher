@@ -22,8 +22,8 @@ import com.google.gson.JsonObject;
 import com.mojang.authlib.exceptions.AuthenticationException;
 
 import de.myftb.launcher.autoconfig.AutoConfigManager;
-import de.myftb.launcher.cef.BlockExternalRequestHandler;
 import de.myftb.launcher.cef.LauncherContextMenuHandler;
+import de.myftb.launcher.cef.LauncherRequestHandler;
 import de.myftb.launcher.cef.gui.CefFrame;
 import de.myftb.launcher.cef.ipc.TopicMessageHandler;
 import de.myftb.launcher.integration.DiscordIntegration;
@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
 //TODO Ingame Helper Mod (+Discord)
 public class Launcher {
     private static final Logger log = LoggerFactory.getLogger(Launcher.class);
-    private static boolean development = false;
+    private static final boolean development = "dev".equals(System.getProperty("environment", "production"));
     private static Launcher instance;
 
     private final CefApp cefApp;
@@ -105,7 +105,7 @@ public class Launcher {
         Launcher.log.info("Entwicklungsversion: {}", Launcher.development);
 
         this.cefClient = this.cefApp.createClient();
-        this.cefClient.addRequestHandler(new BlockExternalRequestHandler());
+        this.cefClient.addRequestHandler(new LauncherRequestHandler());
         this.cefClient.addContextMenuHandler(new LauncherContextMenuHandler(Launcher.development));
 
         CefMessageRouter.CefMessageRouterConfig routerConfig = new CefMessageRouter.CefMessageRouterConfig();
@@ -119,7 +119,7 @@ public class Launcher {
     }
 
     private void init() throws Exception {
-        this.cefBrowser = this.cefClient.createBrowser(Launcher.development ? "http://127.0.0.1:8080" : "launcher://launcher/", false, false);
+        this.cefBrowser = this.cefClient.createBrowser(Launcher.development ? "http://127.0.0.1:8080" : "http://launcher.myftb.local/", false, false);
 
         this.window = new CefFrame(this.cefBrowser);
         this.window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -367,10 +367,6 @@ public class Launcher {
     }
 
     public static void main(String[] args) throws Exception {
-        if ("dev".equals(System.getProperty("environment", "production"))) {
-            Launcher.development = true;
-        }
-
         String dsn = System.getProperty("launcher.sentry.dsn", "@sentrydsn@");
         if (dsn.startsWith("http")) {
             String sentryParameters = URLEncodedUtils.format(Arrays.asList(

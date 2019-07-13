@@ -18,7 +18,6 @@
 
 package de.myftb.launcher.cef;
 
-import de.myftb.launcher.cef.schemes.LauncherScheme;
 import de.myftb.launcher.cef.schemes.ModpackImageScheme;
 import de.myftb.launcher.cef.schemes.PlayerHeadScheme;
 
@@ -42,7 +41,6 @@ public class LauncherCefAppHandler extends CefAppHandlerAdapter {
     public void onRegisterCustomSchemes(CefSchemeRegistrar registrar) {
         registrar.addCustomScheme("playerhead", true, false, false, false, true, false, false);
         registrar.addCustomScheme("modpackimage", true, false, false, false, true, false, false);
-        registrar.addCustomScheme("launcher", true, false, false, false, true, false, false);
     }
 
     @Override
@@ -51,7 +49,6 @@ public class LauncherCefAppHandler extends CefAppHandlerAdapter {
         SchemeHandlerFactory factory = new SchemeHandlerFactory();
         cefApp.registerSchemeHandlerFactory("playerhead", "", factory);
         cefApp.registerSchemeHandlerFactory("modpackimage", "", factory);
-        cefApp.registerSchemeHandlerFactory("launcher", "", factory);
     }
 
     @Override
@@ -67,8 +64,6 @@ public class LauncherCefAppHandler extends CefAppHandlerAdapter {
                 return new PlayerHeadScheme();
             } else if ("modpackimage".equals(schemeName)) {
                 return new ModpackImageScheme();
-            } else if ("launcher".equals(schemeName)) {
-                return new LauncherScheme();
             }
 
             return null;

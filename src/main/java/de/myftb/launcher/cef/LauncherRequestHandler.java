@@ -18,34 +18,40 @@
 
 package de.myftb.launcher.cef;
 
+import de.myftb.launcher.cef.schemes.LauncherScheme;
+
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefRequestHandlerAdapter;
+import org.cef.handler.CefResourceHandler;
 import org.cef.network.CefRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BlockExternalRequestHandler extends CefRequestHandlerAdapter {
-    private static final Logger log = LoggerFactory.getLogger(BlockExternalRequestHandler.class);
+public class LauncherRequestHandler extends CefRequestHandlerAdapter {
+    private static final Logger log = LoggerFactory.getLogger(LauncherRequestHandler.class);
     private static final List<String> allowedSchemes = Arrays.asList("playerhead", "chrome-devtools", "modpackimage", "launcher");
+    private static final List<String> allowedHosts = Arrays.asList("127.0.0.1", "localhost", "launcher.myftb.local"); //NOPMD
+    private static final LauncherScheme launcherScheme = new LauncherScheme();
 
     private boolean checkRequest(CefRequest request) {
         try {
             URI uri = new URI(request.getURL());
-            if (BlockExternalRequestHandler.allowedSchemes.contains(uri.getScheme())) {
+            if (LauncherRequestHandler.allowedSchemes.contains(uri.getScheme())) {
                 return false;
             }
 
-            if (!"127.0.0.1".equals(uri.getHost()) && !"localhost".equals(uri.getHost())) { //NOPMD
-                BlockExternalRequestHandler.log.info("Externe URL blockiert: " + request.getURL());
+            if (!LauncherRequestHandler.allowedHosts.contains(uri.getHost())) {
+                LauncherRequestHandler.log.info("Externe URL blockiert: " + request.getURL());
                 return true;
             }
         } catch (Exception e) {
-            BlockExternalRequestHandler.log.info("Externe URL blockiert: " + request.getURL(), e);
+            LauncherRequestHandler.log.info("Externe URL blockiert: " + request.getURL(), e);
             return true;
         }
 
@@ -62,4 +68,17 @@ public class BlockExternalRequestHandler extends CefRequestHandlerAdapter {
         return this.checkRequest(cefRequest);
     }
 
+    @Override
+    public CefResourceHandler getResourceHandler(CefBrowser cefBrowser, CefFrame cefFrame, CefRequest cefRequest) {
+        try {
+            URI uri = new URI(cefRequest.getURL());
+            if (uri.getHost().equals("launcher.myftb.local")) {
+                return LauncherRequestHandler.launcherScheme;
+            }
+        } catch (URISyntaxException e) {
+            // Ignore
+        }
+
+        return super.getResourceHandler(cefBrowser, cefFrame, cefRequest);
+    }
 }

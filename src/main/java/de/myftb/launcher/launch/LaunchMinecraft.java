@@ -299,7 +299,10 @@ public class LaunchMinecraft {
             jvmArguments.addAll(modpackManifest.getLaunch().get("flags"));
         }
 
-        jvmArguments.addAll(Arrays.asList(Launcher.getInstance().getConfig().getJvmArgs().split(" ")));
+        if (!Launcher.getInstance().getConfig().getJvmArgs().isEmpty()) {
+            String[] customArgs = Launcher.getInstance().getConfig().getJvmArgs().split(" ");
+            jvmArguments.addAll(Arrays.asList(customArgs));
+        }
 
         File librariesDir = Launcher.getInstance().getSaveSubDirectory("libraries");
         List<String> classpath = libraries.stream()
@@ -329,7 +332,7 @@ public class LaunchMinecraft {
         tokens.put("natives_directory", nativesDir.getAbsolutePath());
         tokens.put("launcher_name", "MyFTBLauncher");
         tokens.put("launcher_version", Launcher.getVersion());
-        tokens.put("classpath", String.join(";", classpath));
+        tokens.put("classpath", String.join(File.pathSeparator, classpath));
 
         tokens.put("min_memory", String.valueOf(Launcher.getInstance().getConfig().getMinMemory()));
         tokens.put("max_memory", String.valueOf(Launcher.getInstance().getConfig().getMaxMemory()));
