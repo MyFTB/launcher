@@ -76,46 +76,49 @@ public class LaunchMinecraft {
     private static List<Library> getAllLibraries(ModpackManifest modpackManifest, MinecraftVersionManifest minecraftManifest) {
         List<Library> modpackLibs = modpackManifest.getVersionManifest().getLibraries().stream()
                 .filter(library -> minecraftManifest.getLibraries().stream().noneMatch(lib -> lib.getName().equals(library.getName())))
+                .filter(Library::isAllowed)
                 .collect(Collectors.toList());
 
         List<Library> joinedLibs = new ArrayList<>(modpackLibs);
-        minecraftManifest.getLibraries().forEach(library -> {
-            Optional<Library> sameLib = joinedLibs.stream()
-                    .filter(lib -> lib.getArtifactGroup().equals(library.getArtifactGroup())
-                            && lib.getArtifactName().equals(library.getArtifactName())).findFirst();
+        minecraftManifest.getLibraries().stream()
+                .filter(Library::isAllowed)
+                .forEach(library -> {
+                    Optional<Library> sameLib = joinedLibs.stream()
+                            .filter(lib -> lib.getArtifactGroup().equals(library.getArtifactGroup())
+                                    && lib.getArtifactName().equals(library.getArtifactName())).findFirst();
 
-            if (sameLib.isPresent()) {
-                if (sameLib.get().getArtifactVersion().equals(library.getArtifactVersion())) {
-                    if (library.getDownloads() != null) {
-                        if (sameLib.get().getDownloads() == null) {
-                            sameLib.get().setDownloads(library.getDownloads());
-                        } else {
-                            if (sameLib.get().getDownloads().getArtifact() == null) {
-                                sameLib.get().getDownloads().setArtifact(library.getDownloads().getArtifact());
+                    if (sameLib.isPresent()) {
+                        if (sameLib.get().getArtifactVersion().equals(library.getArtifactVersion())) {
+                            if (library.getDownloads() != null) {
+                                if (sameLib.get().getDownloads() == null) {
+                                    sameLib.get().setDownloads(library.getDownloads());
+                                } else {
+                                    if (sameLib.get().getDownloads().getArtifact() == null) {
+                                        sameLib.get().getDownloads().setArtifact(library.getDownloads().getArtifact());
+                                    }
+
+                                    if (library.getDownloads().getClassifiers() != null) {
+                                        if (sameLib.get().getDownloads().getClassifiers() == null) {
+                                            sameLib.get().getDownloads().setClassifiers(library.getDownloads().getClassifiers());
+                                        } else {
+                                            sameLib.get().getDownloads().getClassifiers().putAll(library.getDownloads().getClassifiers());
+                                        }
+                                    }
+                                }
                             }
 
-                            if (library.getDownloads().getClassifiers() != null) {
-                                if (sameLib.get().getDownloads().getClassifiers() == null) {
-                                    sameLib.get().getDownloads().setClassifiers(library.getDownloads().getClassifiers());
+                            if (library.getNatives() != null) {
+                                if (sameLib.get().getNatives() == null) {
+                                    sameLib.get().setNatives(library.getNatives());
                                 } else {
-                                    sameLib.get().getDownloads().getClassifiers().putAll(library.getDownloads().getClassifiers());
+                                    sameLib.get().getNatives().putAll(library.getNatives());
                                 }
                             }
                         }
+                    } else {
+                        joinedLibs.add(library);
                     }
-
-                    if (library.getNatives() != null) {
-                        if (sameLib.get().getNatives() == null) {
-                            sameLib.get().setNatives(library.getNatives());
-                        } else {
-                            sameLib.get().getNatives().putAll(library.getNatives());
-                        }
-                    }
-                }
-            } else {
-                joinedLibs.add(library);
-            }
-        });
+                });
 
         joinedLibs.addAll(LaunchMinecraft.getAdditionalLibraries(modpackManifest, minecraftManifest));
 

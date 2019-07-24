@@ -33,7 +33,7 @@ export default class Console extends React.Component {
                 <ScrollFollow
                     startFollowing
                     render={({ onScroll, follow, startFollowing, stopFollowing }) => (
-                        <ConsoleLog url='no' stream onScroll={onScroll} follow={follow} lineClassName="console-line" highlightLineClassName="highlighted" />
+                        <ConsoleLog url='no' stream onScroll={onScroll} follow={follow} lineClassName="console-line" highlightLineClassName="highlighted" selectableLines={true} />
                     )}
                 />
             </div>

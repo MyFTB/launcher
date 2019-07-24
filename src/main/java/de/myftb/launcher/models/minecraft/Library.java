@@ -78,6 +78,14 @@ public class Library {
         return this.rules;
     }
 
+    public boolean isAllowed() {
+        if (this.rules == null) {
+            return true;
+        }
+
+        return this.rules.stream().anyMatch(Rule::matches);
+    }
+
     public List<DownloadCallable> getLibraryDownloads() {
         List<DownloadCallable> downloads = new ArrayList<>();
 
