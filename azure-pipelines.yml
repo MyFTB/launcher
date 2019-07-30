@@ -10,6 +10,9 @@ pool:
 
 steps:
 - task: Gradle@2
+  env:
+    LAUNCHER_SENTRY_DSN: $(SENTRY_DSN)
+    LAUNCHER_CI: 'true'
   inputs:
     workingDirectory: ''
     gradleOptions: '-Xmx3072m'
