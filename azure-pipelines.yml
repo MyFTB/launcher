@@ -1,0 +1,37 @@
+strategy:
+  matrix:
+    mac:
+      imageName: 'macOS-10.14'
+    windows:
+      imageName: 'vs2017-win2016'
+
+pool:
+  vmImage: $(imageName)
+
+steps:
+- task: Gradle@2
+  inputs:
+    workingDirectory: ''
+    gradleOptions: '-Xmx3072m'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.8'
+    jdkArchitectureOption: 'x64'
+    tasks: 'setup build'
+
+- task: ArchiveFiles@2
+  condition: eq(variables['Agent.OS'], 'Darwin')
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)/build/libs/MyFTBLauncher.app'
+    includeRootFolder: true
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/MyFTBLauncher.app.zip'
+
+- task: CopyFiles@2
+  inputs:
+    contents: '**/build/libs/*.jar'
+    targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'launcher'
