@@ -1,4 +1,4 @@
-task buildMacosApp {
+task buildMacOsApp {
     group = 'Launcher'
 
     doLast {
@@ -35,13 +35,9 @@ task buildMacosApp {
             from project.file('run/jcef/jcef_app.app')
             into project.file("$project.buildDir/libs/${project.name}.app")
         }
-
-        project.exec {
-            commandLine('chmod', '+x', "$project.buildDir/libs/${project.name}.app/Contents/Frameworks/jcef Helper.app/Contents/MacOS/jcef Helper")
-        }
     }
 }
 
-buildMacosApp.dependsOn downloadJre
-buildMacosApp.dependsOn downloadCef
-shadowJar.finalizedBy buildMacosApp
+buildMacOsApp.dependsOn downloadMacOsJre
+buildMacOsApp.dependsOn downloadCef
+shadowJar.finalizedBy buildMacOsApp

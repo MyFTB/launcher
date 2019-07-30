@@ -14,9 +14,7 @@ plugins {
 def os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH)
 
 apply from: 'gradle/dependencyIndicies.gradle'
-if (os.contains("mac")) {
-	apply from: 'gradle/macos.gradle'
-}
+apply from: 'gradle/macos.gradle'
 
 configurations {
 	appbundler

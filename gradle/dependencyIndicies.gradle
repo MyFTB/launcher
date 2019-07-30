@@ -66,6 +66,14 @@ task downloadJre {
     }
 }
 
+task downloadMacOsJre {
+    group = 'Launcher'
+
+    doLast {
+        downloadIndex("jre-macosx-x64", project.file("run/runtime"))
+    }
+}
+
 task downloadCef {
     group = 'Launcher'
 
