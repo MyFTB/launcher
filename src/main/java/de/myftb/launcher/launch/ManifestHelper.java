@@ -43,6 +43,10 @@ public class ManifestHelper {
     private static final Map<String, MinecraftVersionManifest> versionManifestCache = new HashMap<>();
     private static final Map<String, ModpackManifest> modpackManifestCache = new HashMap<>();
 
+    public static void clearModpackCache() {
+        ManifestHelper.modpackManifestCache.clear();
+    }
+
     public static ModpackManifestList getManifests() throws IOException {
         return LaunchHelper.mapper.readValue(LaunchHelper.download(
                 String.format(Constants.packList, Launcher.getInstance().getConfig().getPackKey()), null), ModpackManifestList.class);
@@ -109,7 +113,7 @@ public class ManifestHelper {
                     continue;
                 }
             } catch (IOException e) {
-                ManifestHelper.log.warn("Fehler beim lesen von Modpack-Installationsstatus " + successFile.getAbsolutePath(), e);
+                ManifestHelper.log.warn("Fehler beim Lesen von Modpack-Installationsstatus " + successFile.getAbsolutePath(), e);
                 continue;
             }
 

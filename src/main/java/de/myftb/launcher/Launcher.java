@@ -218,11 +218,21 @@ public class Launcher {
      * @param newValues Neue Konfigurationswerte
      */
     void mergeConfig(JsonObject newValues) {
+        String oldPackKeys = this.config.getPackKey();
         JsonObject current = this.config.toJson();
         newValues.entrySet().forEach(entry -> current.add(entry.getKey(), entry.getValue()));
         this.config = this.config.readConfig(current);
         this.saveConfig();
         Launcher.log.info("Einstellungen gespeichert");
+
+        if (!oldPackKeys.equals(this.config.getPackKey())) {
+            this.clearCache();
+        }
+    }
+
+    void clearCache() {
+        this.modpackList = null;
+        ManifestHelper.clearModpackCache();
     }
 
     /**
