@@ -31,3 +31,13 @@ Danach lässt sich der Launcher als Gradle Projekt in die IDE einbinden.
 Da für das Starten des Launchers einige Startparameter notwendig sind, gibt es `./gradlew runLauncher` als Hilfsmittel.
 
 > Das Starten des Launchers in der Entwicklungsumgebung ist aktuell nicht unter macOS möglich.
+
+## Einen großen Dank an: / Special Thanks to:
+
+![YourKit](https://www.yourkit.com/images/yklogo.png)
+
+[YourKit](https://www.yourkit.com), der Entwickler von [YourKit Java Profiler](https://www.yourkit.com/java/profiler/), [YourKit .NET Profiler](https://www.yourkit.com/.net/profiler/) und [YourKit YouMonitor](https://www.yourkit.com/youmonitor/), unterstützt Open Source Projekte mit innovativen und intelligenten Monitorung- und Profilerwerkzeugen für Java sowie .NET Anwendungen.
+Vielen Dank für das Bereitstellen einer Open Source Lizenz für den MyFTB Launcher!
+
+[YourKit](https://www.yourkit.com), the developer of [YourKit Java Profiler](https://www.yourkit.com/java/profiler/), [YourKit .NET Profiler](https://www.yourkit.com/.net/profiler/) and [YourKit YouMonitor](https://www.yourkit.com/youmonitor/), supports open source projects with innovative and intelligent tools for monitoring and profiling Java and .NET applications.
+Thank you for providing an open source license to the MyFTB Launcher!
