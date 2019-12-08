@@ -32,7 +32,7 @@ export default class RangeInput extends React.Component {
     }
 
     callOnChange() {
-        if(this.props.onChange !== NaN) {
+        if (this.props.onChange) {
             this.props.onChange()
         }
     }

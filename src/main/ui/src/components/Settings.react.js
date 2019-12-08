@@ -81,7 +81,7 @@ export default class Settings extends React.Component {
     onMinMemoryChange(){
         let min = this.minMemory.current;
         let max = this.maxMemory.current;
-        if(min.getValue() > max.getValue()) {
+        if (min.getValue() > max.getValue()) {
             max.setValue(min.getValue());
         }
     }
@@ -89,7 +89,7 @@ export default class Settings extends React.Component {
     onMaxMemoryChange(){
         let min = this.minMemory.current;
         let max = this.maxMemory.current;
-        if(max.getValue() < min.getValue()) {
+        if (max.getValue() < min.getValue()) {
             min.setValue(max.getValue());
         }
     }
