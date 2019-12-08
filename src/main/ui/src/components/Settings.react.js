@@ -78,7 +78,7 @@ export default class Settings extends React.Component {
         window.launcher.sendIpc('submit_settings', newSettings);
     }
 
-    onMinMemoryChange(){
+    onMinMemoryChange() {
         let min = this.minMemory.current;
         let max = this.maxMemory.current;
         if (min.getValue() > max.getValue()) {
@@ -86,7 +86,7 @@ export default class Settings extends React.Component {
         }
     }
 
-    onMaxMemoryChange(){
+    onMaxMemoryChange() {
         let min = this.minMemory.current;
         let max = this.maxMemory.current;
         if (max.getValue() < min.getValue()) {
