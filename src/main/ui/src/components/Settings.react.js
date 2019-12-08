@@ -31,6 +31,13 @@ export default class Settings extends React.Component {
             autoConfigOptions: {configs:[], types: [], constraints: []}
         };
         this.doInstallDirSelection = this.doInstallDirSelection.bind(this);
+
+        this.onMinMemoryChange = this.onMinMemoryChange.bind(this);
+        this.onMaxMemoryChange = this.onMaxMemoryChange.bind(this);
+
+        this.minMemory = React.createRef();
+        this.maxMemory = React.createRef();
+
     }
 
     componentDidMount() {
@@ -71,6 +78,22 @@ export default class Settings extends React.Component {
         window.launcher.sendIpc('submit_settings', newSettings);
     }
 
+    onMinMemoryChange(){
+        let min = this.minMemory.current;
+        let max = this.maxMemory.current;
+        if(min.getValue() > max.getValue()) {
+            max.setValue(min.getValue());
+        }
+    }
+
+    onMaxMemoryChange(){
+        let min = this.minMemory.current;
+        let max = this.maxMemory.current;
+        if(max.getValue() < min.getValue()) {
+            min.setValue(max.getValue());
+        }
+    }
+
     doInstallDirSelection() {
         window.launcher.sendIpc('open_directory_browser', false, (err, data) => {
             this.refs.installationDir.value = data.directory;
@@ -91,11 +114,11 @@ export default class Settings extends React.Component {
             <div className="settings">
                 <div className="form-group">
                     <p>Minimaler RAM in MB</p>
-                    <RangeInput {...this.getOptionAttributes('minMemory')} min="1024" max="16384"></RangeInput>
+                    <RangeInput {...this.getOptionAttributes('minMemory')} min="1024" max="16384" ref={this.minMemory} onChange={this.onMinMemoryChange}></RangeInput>
                 </div>
                 <div className="form-group">
                     <p>Maximaler RAM in MB</p>
-                    <RangeInput {...this.getOptionAttributes('maxMemory')} min="1024" max="16384"></RangeInput>
+                    <RangeInput {...this.getOptionAttributes('maxMemory')} min="1024" max="16384" ref={this.maxMemory} onChange={this.onMaxMemoryChange}></RangeInput>
                 </div>
                 <div className="form-group">
                     <p>Java Argumente</p>
