@@ -31,6 +31,9 @@ export default class Settings extends React.Component {
             autoConfigOptions: {configs:[], types: [], constraints: []}
         };
         this.doInstallDirSelection = this.doInstallDirSelection.bind(this);
+
+        this.onMinMemoryChange = this.onMinMemoryChange.bind(this);
+        this.onMaxMemoryChange = this.onMaxMemoryChange.bind(this);
     }
 
     componentDidMount() {
@@ -71,6 +74,22 @@ export default class Settings extends React.Component {
         window.launcher.sendIpc('submit_settings', newSettings);
     }
 
+    onMinMemoryChange() {
+        let min = this.refs.minMemory;
+        let max = this.refs.maxMemory;
+        if (min.getValue() > max.getValue()) {
+            max.setValue(min.getValue());
+        }
+    }
+
+    onMaxMemoryChange() {
+        let min = this.refs.minMemory;
+        let max = this.refs.maxMemory;
+        if (max.getValue() < min.getValue()) {
+            min.setValue(max.getValue());
+        }
+    }
+
     doInstallDirSelection() {
         window.launcher.sendIpc('open_directory_browser', false, (err, data) => {
             this.refs.installationDir.value = data.directory;
@@ -91,11 +110,11 @@ export default class Settings extends React.Component {
             <div className="settings">
                 <div className="form-group">
                     <p>Minimaler RAM in MB</p>
-                    <RangeInput {...this.getOptionAttributes('minMemory')} min="1024" max="16384"></RangeInput>
+                    <RangeInput {...this.getOptionAttributes('minMemory')} min="1024" max="16384" ref="minMemory" onChange={this.onMinMemoryChange}></RangeInput>
                 </div>
                 <div className="form-group">
                     <p>Maximaler RAM in MB</p>
-                    <RangeInput {...this.getOptionAttributes('maxMemory')} min="1024" max="16384"></RangeInput>
+                    <RangeInput {...this.getOptionAttributes('maxMemory')} min="1024" max="16384" ref="maxMemory" onChange={this.onMaxMemoryChange}></RangeInput>
                 </div>
                 <div className="form-group">
                     <p>Java Argumente</p>

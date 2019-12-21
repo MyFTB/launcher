@@ -31,7 +31,23 @@ export default class RangeInput extends React.Component {
         this.updateBubble(true);
     }
 
+    callOnChange() {
+        if (this.props.onChange) {
+            this.props.onChange()
+        }
+    }
+
     onValChanged() {
+        this.updateBubble(true);
+        this.callOnChange();
+    }
+
+    getValue() {
+        return parseInt(this.refs.slider.value);
+    }
+
+    setValue(value) {
+        this.refs.slider.value = value;
         this.updateBubble(true);
     }
 
@@ -40,6 +56,7 @@ export default class RangeInput extends React.Component {
         if (intVal !== NaN && this.refs.slider.value !== intVal && intVal >= this.refs.slider.min && intVal <= this.refs.slider.max) {
             this.refs.slider.value = intVal;
             this.updateBubble(false);
+            this.callOnChange();
         }
     }
 
