@@ -16,8 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { LazyLog } from 'react-lazylog/es5';
+import { LazyLog } from 'react-lazylog';
 import { convertBufferToLines } from 'react-lazylog/src/utils';
+import { encode } from 'react-lazylog/src/encoding';
 
 export default class ConsoleLog extends LazyLog {
 
@@ -29,12 +30,13 @@ export default class ConsoleLog extends LazyLog {
         this.endRequest();
         let encoder = new TextEncoder();
 
-        let overage = null;
         window.launcher.listenIpcRaw('console_data', (err, dataRaw) => {
-            let data = encoder.encode(dataRaw);
-            const { lines, remaining } = convertBufferToLines(data, overage);
-            overage = remaining;
-            this.handleUpdate(lines);
+            let encodedLog = encode(dataRaw);
+            const { lines, remaining } = convertBufferToLines(encodedLog);
+            this.handleUpdate({
+                lines: remaining ? lines.concat(remaining) : lines,
+                encodedLog,
+            });
         });
         window.launcher.sendIpc('request_console', false);
     }

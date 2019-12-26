@@ -398,7 +398,8 @@ public class IpcTopics {
                         .execute()
                         .returnResponse();
 
-                this.posts = new Gson().fromJson(new InputStreamReader(response.getEntity().getContent()), JsonElement.class).getAsJsonArray();
+                this.posts = new Gson().fromJson(new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8), JsonElement.class)
+                        .getAsJsonArray();
             } catch (IOException e) {
                 callback.failure("Die Beiträge konnten nicht abgerufen werdne");
                 IpcTopics.log.warn("Fehler beim Abrufen der Website Posts", e);
