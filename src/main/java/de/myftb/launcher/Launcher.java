@@ -377,6 +377,7 @@ public class Launcher {
     }
 
     public static void main(String[] args) throws Exception {
+        System.setProperty("java.net.preferIPv4Stack" , "true");
         String dsn = System.getProperty("launcher.sentry.dsn", "@sentrydsn@");
         if (dsn.startsWith("http")) {
             String sentryParameters = URLEncodedUtils.format(Arrays.asList(
