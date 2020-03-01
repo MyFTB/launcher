@@ -1,6 +1,6 @@
 /*
  * MyFTBLauncher
- * Copyright (C) 2019 MyFTB <https://myftb.de>
+ * Copyright (C) 2020 MyFTB <https://myftb.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@ package de.myftb.launcher.cef;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import org.cef.callback.CefCallback;

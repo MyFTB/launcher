@@ -1,6 +1,6 @@
 /*
  * MyFTBLauncher
- * Copyright (C) 2019 MyFTB <https://myftb.de>
+ * Copyright (C) 2020 MyFTB <https://myftb.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.myftb.launcher.Launcher;
-import de.myftb.launcher.launch.LaunchHelper;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
 import java.io.IOException;

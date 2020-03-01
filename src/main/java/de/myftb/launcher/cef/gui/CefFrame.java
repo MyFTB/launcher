@@ -1,6 +1,6 @@
 /*
  * MyFTBLauncher
- * Copyright (C) 2019 MyFTB <https://myftb.de>
+ * Copyright (C) 2020 MyFTB <https://myftb.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,8 @@ import de.myftb.launcher.Launcher;
 import de.myftb.launcher.cef.LauncherCefAppHandler;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
 
 import org.cef.CefApp;
 import org.cef.CefSettings;
