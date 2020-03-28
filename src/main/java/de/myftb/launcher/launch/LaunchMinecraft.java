@@ -212,7 +212,7 @@ public class LaunchMinecraft {
             }
         }
 
-        LaunchMinecraft.log.info("Modpack " + modpackManifest.getTitle() + " installiert");
+        LaunchMinecraft.log.info("Modpack {} installiert", modpackManifest.getTitle());
         boolean success = failed == 0;
         Files.write(new File(instanceDir, ".success").toPath(), new byte[]{(byte) (success ? 1 : 0)});
 

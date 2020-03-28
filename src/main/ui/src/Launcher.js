@@ -323,7 +323,7 @@ class Launcher extends React.Component {
                     </div>
                 )}
 
-                <div className={'console-breakout' + (this.state.modpackRunning && !this.state.consoleOpen ? ' active': '')}>
+                <div className={'console-breakout' + (!this.state.consoleOpen ? ' active': '')}>
                     <NavLink to="/console" activeClassName="active"><FontAwesomeIcon icon="terminal"/></NavLink>
                 </div>
 

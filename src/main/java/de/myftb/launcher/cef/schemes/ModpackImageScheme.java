@@ -18,7 +18,7 @@
 
 package de.myftb.launcher.cef.schemes;
 
-import de.myftb.launcher.Constants;
+import de.myftb.launcher.HttpRequest;
 import de.myftb.launcher.Launcher;
 import de.myftb.launcher.cef.DataResourceHandler;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,9 +53,7 @@ public class ModpackImageScheme extends DataResourceHandler {
 
             File cacheFile = new File(Launcher.getInstance().getSaveSubDirectory("cache"), imageLocation.get());
             if (!cacheFile.isFile() || (System.currentTimeMillis() - cacheFile.lastModified()) >= TimeUnit.DAYS.toMillis(3)) {
-                Request.Get("https://launcher.myftb.de/images/" + imageLocation.get())
-                        .connectTimeout(Constants.connectTimeout)
-                        .socketTimeout(Constants.socketTimeout)
+                HttpRequest.get("https://launcher.myftb.de/images/" + imageLocation.get())
                         .execute()
                         .saveContent(cacheFile);
             }

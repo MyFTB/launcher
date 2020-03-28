@@ -115,11 +115,7 @@ public class LauncherConfig {
 
     public List<String> getLastPlayedPacks() {
         List<String> installed = ManifestHelper.getInstalledModpacks().stream().map(ModpackManifest::getName).collect(Collectors.toList());
-        for (String pack : this.lastPlayedPacks) {
-            if (!installed.contains(pack)) {
-                this.lastPlayedPacks.remove(pack);
-            }
-        }
+        this.lastPlayedPacks.removeIf(pack -> !installed.contains(pack));
 
         return this.lastPlayedPacks;
     }

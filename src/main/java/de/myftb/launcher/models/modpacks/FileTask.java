@@ -20,6 +20,11 @@ package de.myftb.launcher.models.modpacks;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import de.myftb.launcher.Constants;
+import de.myftb.launcher.launch.DownloadCallable;
+
+import java.io.File;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FileTask {
     private String hash;
@@ -46,6 +51,14 @@ public class FileTask {
 
     public Condition getCondition() {
         return this.when;
+    }
+
+    public DownloadCallable getDownloadCallable(File instanceDir) {
+        String url = String.format(Constants.launcherObjects, this.getLocation());
+        if (this.getLocation().startsWith("http")) {
+            url = this.getLocation();
+        }
+        return new DownloadCallable(new DownloadCallable.Downloadable(url, this.getHash(), new File(instanceDir, this.getTo())), this.isUserFile());
     }
 
 }

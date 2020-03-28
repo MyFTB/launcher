@@ -27,7 +27,7 @@ import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.util.UUIDTypeAdapter;
 
-import de.myftb.launcher.Constants;
+import de.myftb.launcher.HttpRequest;
 import de.myftb.launcher.Launcher;
 import de.myftb.launcher.cef.DataResourceHandler;
 
@@ -51,7 +51,6 @@ import javax.imageio.ImageIO;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,9 +95,7 @@ public class PlayerHeadScheme extends DataResourceHandler {
 
     private byte[] getRemoteSkin(String uuid) {
         try {
-            HttpResponse response = Request.Get("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid)
-                    .connectTimeout(Constants.connectTimeout)
-                    .socketTimeout(Constants.socketTimeout)
+            HttpResponse response = HttpRequest.get("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid)
                     .execute()
                     .returnResponse();
 
@@ -123,9 +120,7 @@ public class PlayerHeadScheme extends DataResourceHandler {
                     MinecraftProfileTexture skin = textures.getTextures().get(MinecraftProfileTexture.Type.SKIN);
                     URI skinUri = new URI(skin.getUrl());
                     if (skinUri.getHost().endsWith(".mojang.com") || skinUri.getHost().endsWith(".minecraft.net")) {
-                        HttpResponse skinResponse = Request.Get(skinUri)
-                                .connectTimeout(Constants.connectTimeout)
-                                .socketTimeout(Constants.socketTimeout)
+                        HttpResponse skinResponse = HttpRequest.get(skinUri)
                                 .execute()
                                 .returnResponse();
 

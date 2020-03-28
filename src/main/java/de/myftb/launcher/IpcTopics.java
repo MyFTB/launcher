@@ -57,7 +57,6 @@ import javax.swing.JFileChooser;
 
 import mslinks.ShellLink;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -266,7 +265,7 @@ public class IpcTopics {
                     }
                 });
             } catch (IOException e) {
-                callback.failure("Das Modpack konnte nicht aktualisiert werden");
+                callback.failure("Das Modpack konnte nicht gestartet werden");
                 IpcTopics.log.warn("Das Modpack " + modpack.get().getName() + " konnte nicht gestartet werden", e);
             }
         } catch (IllegalStateException e) {
@@ -392,9 +391,7 @@ public class IpcTopics {
     void onRequestPosts(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
         if (this.posts == null) {
             try {
-                HttpResponse response = Request.Get(Constants.postsApi)
-                        .connectTimeout(Constants.connectTimeout)
-                        .socketTimeout(Constants.socketTimeout)
+                HttpResponse response = HttpRequest.get(Constants.postsApi)
                         .execute()
                         .returnResponse();
 

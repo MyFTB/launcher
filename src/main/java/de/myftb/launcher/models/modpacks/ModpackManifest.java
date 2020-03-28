@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import com.google.common.io.Files;
 
-import de.myftb.launcher.Constants;
+import de.myftb.launcher.HttpRequest;
 import de.myftb.launcher.Launcher;
 import de.myftb.launcher.models.minecraft.MinecraftVersionManifest;
 
@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import javax.imageio.ImageIO;
 
 import net.sf.image4j.codec.ico.ICOEncoder;
-import org.apache.http.client.fluent.Request;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ModpackManifest {
@@ -104,9 +103,7 @@ public class ModpackManifest {
                 target = new File(target.getParentFile(), Files.getNameWithoutExtension(target.getName()) + ".png");
             }
 
-            Request.Get("https://launcher.myftb.de/images/" + imageLocation.get())
-                    .connectTimeout(Constants.connectTimeout)
-                    .socketTimeout(Constants.socketTimeout)
+            HttpRequest.get("https://launcher.myftb.de/images/" + imageLocation.get())
                     .execute()
                     .saveContent(target);
 

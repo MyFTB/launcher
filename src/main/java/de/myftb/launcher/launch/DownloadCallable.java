@@ -18,13 +18,12 @@
 
 package de.myftb.launcher.launch;
 
-import de.myftb.launcher.Constants;
+import de.myftb.launcher.HttpRequest;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-import org.apache.http.client.fluent.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,9 +53,7 @@ public class DownloadCallable implements Callable<File> {
 
         this.downloadable.targetFile.getParentFile().mkdirs();
 
-        Request.Get(this.downloadable.url)
-                .connectTimeout(Constants.connectTimeout)
-                .socketTimeout(Constants.socketTimeout)
+        HttpRequest.get(this.downloadable.url)
                 .execute()
                 .saveContent(this.downloadable.targetFile);
 

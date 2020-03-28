@@ -26,14 +26,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Request;
 
 public class HastebinHelper {
 
     public static String post(byte[] content) throws IOException {
-        HttpResponse response = Request.Post(Constants.pasteTarget + "/documents")
-                .connectTimeout(Constants.connectTimeout)
-                .socketTimeout(Constants.socketTimeout)
+        HttpResponse response = HttpRequest.post(Constants.pasteTarget + "/documents")
                 .bodyByteArray(content)
                 .execute()
                 .returnResponse();

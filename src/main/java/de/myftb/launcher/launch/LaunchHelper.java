@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-import de.myftb.launcher.Constants;
+import de.myftb.launcher.HttpRequest;
 import de.myftb.launcher.models.minecraft.Arguments;
 
 import java.io.BufferedInputStream;
@@ -43,7 +43,6 @@ import java.util.concurrent.Executors;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
 
 public class LaunchHelper {
@@ -95,9 +94,7 @@ public class LaunchHelper {
     }
 
     public static String download(String url, String sha1Sum) throws IOException {
-        HttpResponse response = Request.Get(url)
-                .connectTimeout(Constants.connectTimeout)
-                .socketTimeout(Constants.socketTimeout)
+        HttpResponse response = HttpRequest.get(url)
                 .execute()
                 .returnResponse();
 

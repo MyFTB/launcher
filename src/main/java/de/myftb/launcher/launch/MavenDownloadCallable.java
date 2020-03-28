@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import de.myftb.launcher.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,9 +66,7 @@ public class MavenDownloadCallable extends DownloadCallable {
     }
 
     private File tryRepository(String repository, String path) throws IOException {
-        HttpResponse sha1SumResponse = Request.Get(repository + path + ".sha1")
-                .connectTimeout(Constants.connectTimeout)
-                .socketTimeout(Constants.socketTimeout)
+        HttpResponse sha1SumResponse = HttpRequest.get(repository + path + ".sha1")
                 .execute()
                 .returnResponse();
 
@@ -87,9 +85,7 @@ public class MavenDownloadCallable extends DownloadCallable {
 
         this.downloadable.targetFile.getParentFile().mkdirs();
 
-        Request.Get(repository + path)
-                .connectTimeout(Constants.connectTimeout)
-                .socketTimeout(Constants.socketTimeout)
+        HttpRequest.get(repository + path)
                 .execute()
                 .saveContent(this.downloadable.targetFile);
 
