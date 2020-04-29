@@ -35,9 +35,14 @@ task buildMacOsApp {
             from project.file('run/jcef/jcef_app.app')
             into project.file("$project.buildDir/libs/${project.name}.app")
         }
+
+        copy {
+            from project.file('run/runtime/Contents/Home/bin/java')
+            into project.file("$project.buildDir/libs/${project.name}.app/Contents/PlugIns/runtime/Contents/Home/bin")
+        }
     }
 }
 
 buildMacOsApp.dependsOn downloadMacOsJre
-buildMacOsApp.dependsOn downloadCef
+buildMacOsApp.dependsOn downloadMacOsCef
 shadowJar.finalizedBy buildMacOsApp

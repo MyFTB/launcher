@@ -81,3 +81,11 @@ task downloadCef {
         downloadPlatformDependent("jcef", project.file("run/jcef"))
     }
 }
+
+task downloadMacOsCef {
+    group = 'Launcher'
+
+    doLast {
+        downloadIndex("jcef-macosx-x64", project.file("run/jcef"))
+    }
+}
