@@ -21,6 +21,7 @@ package de.myftb.launcher.models.minecraft;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.myftb.launcher.Launcher;
+import de.myftb.launcher.MavenHelper;
 import de.myftb.launcher.launch.DownloadCallable;
 import de.myftb.launcher.launch.MavenDownloadCallable;
 import de.myftb.launcher.models.launcher.Platform;
@@ -90,7 +91,7 @@ public class Library {
         List<DownloadCallable> downloads = new ArrayList<>();
 
         if (this.downloads != null) {
-            if (this.downloads.artifact != null) {
+            if (this.downloads.artifact != null && (this.downloads.artifact.url != null && !this.downloads.artifact.url.isEmpty())) {
                 downloads.add(new DownloadCallable(new DownloadCallable.Downloadable(this.downloads.artifact.url,
                         this.downloads.artifact.sha1,
                         new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
@@ -117,15 +118,7 @@ public class Library {
     }
 
     public String getPath(String classifier) {
-        String[] args = this.name.split("[:]");
-
-        return String.format("%s/%s/%s/%s-%s.jar",
-                args[0].replace(".", "/"), // Classifier
-                args[1], // Artifact Id
-                args[2], // Version
-                args[1], // Artifact Id
-                args[2] + (classifier != null ? "-" + classifier : "")
-        );
+        return new MavenHelper.MavenArtifact(this.name).getFilePath(classifier);
     }
 
     public boolean isExtractionAllowed(String name) {

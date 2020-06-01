@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import de.myftb.launcher.HttpRequest;
+import de.myftb.launcher.MavenHelper;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.util.EntityUtils;
@@ -43,14 +44,7 @@ public class MavenDownloadCallable extends DownloadCallable {
 
     @Override
     public File call() throws Exception {
-        String[] args = this.downloadable.url.split("[:]");
-        String path = String.format("%s/%s/%s/%s-%s.jar",
-                args[0].replace(".", "/"), // Classifier
-                args[1], // Artifact Id
-                args[2], // Version
-                args[1], // Artifact Id
-                args[2] // Version
-        );
+        String path = new MavenHelper.MavenArtifact(this.downloadable.url).getFilePath();
 
         for (String repository : Constants.repositories) {
             try {

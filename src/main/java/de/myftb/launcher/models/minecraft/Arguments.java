@@ -36,10 +36,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class Arguments {
+    private boolean fromList = false;
     private List<Argument> game;
     private List<Argument> jvm;
 
@@ -51,8 +54,13 @@ public class Arguments {
         return this.jvm;
     }
 
-    public static List<String> getFromArguments(List<Argument> arguments) {
-        return arguments.stream()
+    public static List<String> getFromArguments(Arguments base, Arguments list, Function<Arguments, List<Argument>> argumentFn) {
+        Stream<Argument> argumentStream = argumentFn.apply(list).stream();
+        if (base.fromList && list.fromList) {
+            argumentStream = Stream.concat(argumentFn.apply(base).stream(), argumentStream);
+        }
+
+        return argumentStream
                 .filter(argument -> !(argument instanceof Arguments.FilteredArgument)
                         || Rule.isValid(((Arguments.FilteredArgument) argument).getRules()))
                 .flatMap(argument -> argument.getValue().stream())
@@ -133,6 +141,7 @@ public class Arguments {
 
                 return arguments;
             } else if (node instanceof ObjectNode) {
+                arguments.fromList = true;
                 if (node.get("game") == null || node.get("game").isNull()) {
                     arguments.game = Collections.emptyList();
                 } else {

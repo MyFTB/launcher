@@ -23,6 +23,7 @@ import com.mojang.authlib.UserAuthentication;
 
 import de.myftb.launcher.Constants;
 import de.myftb.launcher.Launcher;
+import de.myftb.launcher.MavenHelper;
 import de.myftb.launcher.models.launcher.Platform;
 import de.myftb.launcher.models.minecraft.Arguments;
 import de.myftb.launcher.models.minecraft.AssetIndex;
@@ -52,7 +53,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -147,9 +147,21 @@ public class LaunchMinecraft {
                 new File(Launcher.getInstance().getSaveSubDirectory("versions"), minecraftManifest.getId() + ".jar"))));
 
         // Alle Libraries: Minecraft, Modpack, Launcherfeatures
-        tasks.addAll(LaunchMinecraft.getAllLibraries(modpackManifest, minecraftManifest).stream()
+        List<Library> libraries = LaunchMinecraft.getAllLibraries(modpackManifest, minecraftManifest);
+        tasks.addAll(libraries.stream()
                 .flatMap(libary -> libary.getLibraryDownloads().stream())
                 .collect(Collectors.toList()));
+
+        Optional<Library> neededForgeInstaller = libraries.stream()
+                .filter(library -> library.getArtifactGroup().equals("net.minecraftforge") && library.getArtifactName().equals("forge")
+                        && library.getDownloads() != null && library.getDownloads().getArtifact() != null && library.getDownloads().getArtifact().getUrl().isEmpty())
+                .findFirst();
+
+        if (neededForgeInstaller.isPresent()) {
+            MavenHelper.MavenArtifact forgeArtifact = new MavenHelper.MavenArtifact(neededForgeInstaller.get().getName());
+            LaunchMinecraft.log.info("Möglichen benötigten Forge-Installer für {} gefunden", forgeArtifact);
+            tasks.add(ForgeInstallWrapper.of(forgeArtifact));
+        }
 
         // Asset Index
         String assetIndexStr = LaunchHelper.download(minecraftManifest.getAssetIndex().getUrl(), minecraftManifest.getAssetIndex().getSha1());
@@ -281,7 +293,8 @@ public class LaunchMinecraft {
                     }
                 });
 
-        List<String> gameArguments = Arguments.getFromArguments(modpackManifest.getVersionManifest().getArguments().getGameArguments());
+        List<String> gameArguments = Arguments.getFromArguments(minecraftManifest.getArguments(),
+                modpackManifest.getVersionManifest().getArguments(), Arguments::getGameArguments);
 
         gameArguments.add("--width");
         gameArguments.add(String.valueOf(Launcher.getInstance().getConfig().getGameWidth()));
@@ -290,7 +303,7 @@ public class LaunchMinecraft {
 
         List<String> jvmArguments = modpackManifest.getVersionManifest().getArguments().getJvmArguments() != null
                 && !modpackManifest.getVersionManifest().getArguments().getJvmArguments().isEmpty()
-                ? Arguments.getFromArguments(modpackManifest.getVersionManifest().getArguments().getJvmArguments())
+                ? Arguments.getFromArguments(minecraftManifest.getArguments(), modpackManifest.getVersionManifest().getArguments(), Arguments::getJvmArguments)
                 : new ArrayList<>(Arrays.asList("-Djava.library.path=${natives_directory}",
                 "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump",
                 "-cp", "${classpath}"));
