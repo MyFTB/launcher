@@ -42,7 +42,7 @@ public class ModpackManifest {
     private String name;
     private String version;
     private String gameVersion;
-    private MinecraftVersionManifest versionManifest;
+    private MinecraftVersionManifest versionManifest; // TODO inheritsFrom korrekt beachten
     private Map<String, List<String>> launch;
 
     private List<Feature> features;

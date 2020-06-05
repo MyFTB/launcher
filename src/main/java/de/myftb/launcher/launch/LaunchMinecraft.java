@@ -293,7 +293,8 @@ public class LaunchMinecraft {
                     }
                 });
 
-        List<String> gameArguments = Arguments.getFromArguments(minecraftManifest.getArguments(),
+        Arguments baseArgs = modpackManifest.getVersionManifest().getInheritsFrom() != null ? minecraftManifest.getArguments() : null;
+        List<String> gameArguments = Arguments.getFromArguments(baseArgs,
                 modpackManifest.getVersionManifest().getArguments(), Arguments::getGameArguments);
 
         gameArguments.add("--width");
@@ -303,7 +304,7 @@ public class LaunchMinecraft {
 
         List<String> jvmArguments = modpackManifest.getVersionManifest().getArguments().getJvmArguments() != null
                 && !modpackManifest.getVersionManifest().getArguments().getJvmArguments().isEmpty()
-                ? Arguments.getFromArguments(minecraftManifest.getArguments(), modpackManifest.getVersionManifest().getArguments(), Arguments::getJvmArguments)
+                ? Arguments.getFromArguments(baseArgs, modpackManifest.getVersionManifest().getArguments(), Arguments::getJvmArguments)
                 : new ArrayList<>(Arrays.asList("-Djava.library.path=${natives_directory}",
                 "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump",
                 "-cp", "${classpath}"));

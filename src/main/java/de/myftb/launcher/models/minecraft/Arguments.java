@@ -54,9 +54,9 @@ public class Arguments {
         return this.jvm;
     }
 
-    public static List<String> getFromArguments(Arguments base, Arguments list, Function<Arguments, List<Argument>> argumentFn) {
+    public static List<String> getFromArguments(Arguments base, Arguments list, Function<Arguments, List<Argument>> argumentFn) { // FIXME: Do not include on vanilla
         Stream<Argument> argumentStream = argumentFn.apply(list).stream();
-        if (base.fromList && list.fromList) {
+        if (base != null && base.fromList && list.fromList) {
             argumentStream = Stream.concat(argumentFn.apply(base).stream(), argumentStream);
         }
 

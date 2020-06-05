@@ -29,6 +29,7 @@ public class MinecraftVersionManifest {
     private String id;
     private String mainClass;
     private String type;
+    private String inheritsFrom;
 
     private Map<String, Download> downloads;
     private Map<String, Logging> logging;
@@ -49,6 +50,10 @@ public class MinecraftVersionManifest {
 
     public String getType() {
         return this.type;
+    }
+
+    public String getInheritsFrom() {
+        return this.inheritsFrom;
     }
 
     public Map<String, Download> getDownloads() {
