@@ -24,6 +24,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.UserAuthentication;
 import com.mojang.authlib.exceptions.AuthenticationException;
 
 import de.myftb.launcher.cef.ipc.TopicMessageHandler;
@@ -43,14 +44,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.swing.JFileChooser;
@@ -74,23 +68,27 @@ public class IpcTopics {
     void onRendererArrived(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
         JsonObject cbResponse = new JsonObject();
 
-        if (this.launcher.getConfig().getProfile() == null) {
+        this.ipcHandler.send("update_profiles", this.launcher.getConfig().getGameProfiles());
+
+        if (this.launcher.getConfig().getSelectedProfile() == null) {
             cbResponse.addProperty("login_needed", true);
+            cbResponse.addProperty("newProfile", true);
         } else {
-            Map<String, Object> profileData = this.launcher.getConfig().getProfile().saveForStorage();
+            Map<String, Object> profileData = this.launcher.getConfig().getSelectedProfile().saveForStorage();
             if (profileData.containsKey("username")) {
                 cbResponse.addProperty("login_username", (String) profileData.get("username"));
             }
 
-
-            if (!this.launcher.getConfig().getProfile().isLoggedIn() && !this.launcher.getConfig().getProfile().canLogIn()) {
+            if (!this.launcher.getConfig().getSelectedProfile().isLoggedIn() && !this.launcher.getConfig().getSelectedProfile().canLogIn()) {
                 cbResponse.addProperty("login_needed", true);
+                cbResponse.addProperty("newProfile", false);
             } else {
                 try {
                     this.launcher.login();
                 } catch (AuthenticationException e) {
                     IpcTopics.log.warn("Fehler beim Login", e);
                     cbResponse.addProperty("login_needed", true);
+                    cbResponse.addProperty("newProfile", false);
                 }
             }
         }
@@ -99,16 +97,49 @@ public class IpcTopics {
     }
 
     void onMcLogin(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
-        this.launcher.getConfig().setProfile(this.launcher.getConfig().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT));
-        this.launcher.getConfig().getProfile().setUsername(data.get("username").getAsString());
-        this.launcher.getConfig().getProfile().setPassword(data.get("password").getAsString());
+        if(data.get("newProfile").getAsBoolean()) {
+            this.launcher.getConfig().addProfile(this.launcher.getConfig().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT));
+        } else {
+            this.launcher.getConfig().setProfile(0, this.launcher.getConfig().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT));
+        }
+        this.launcher.getConfig().getSelectedProfile().setUsername(data.get("username").getAsString());
+        this.launcher.getConfig().getSelectedProfile().setPassword(data.get("password").getAsString());
         try {
             this.launcher.login();
+
+            int index = 0;
+            for (UserAuthentication profile : this.launcher.getConfig().getProfiles()) {
+                if(index > 0 && this.launcher.getConfig().getSelectedProfile().getUserID().equals(profile.getUserID())) {
+                    this.launcher.getConfig().removeProfile(index);
+                    break;
+                }
+                index++;
+            }
+
+            this.ipcHandler.send("update_profiles", this.launcher.getConfig().getGameProfiles());
             callback.success(new JsonObject());
         } catch (Exception e) {
+            this.launcher.getConfig().removeProfile(0);
             IpcTopics.log.warn("Fehler beim Login", e);
             callback.failure(e.getLocalizedMessage());
         }
+    }
+
+    void onSwitchProfile(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        this.launcher.getConfig().setSelectedProfile(data.get("index").getAsInt());
+
+        if (!this.launcher.getConfig().getSelectedProfile().isLoggedIn() && !this.launcher.getConfig().getSelectedProfile().canLogIn()) {
+            JsonObject jsonObject = new JsonObject();
+            Map<String, Object> profileData = this.launcher.getConfig().getSelectedProfile().saveForStorage();
+            if (profileData.containsKey("username")) {
+                jsonObject.addProperty("username", (String) profileData.get("username"));
+                jsonObject.addProperty("newProfile", false);
+            }
+            this.ipcHandler.send("show_login_form", jsonObject);
+        }
+
+        this.launcher.saveConfig();
+        this.launcher.getIpcHandler().send("update_profiles", this.launcher.getConfig().getGameProfiles());
     }
 
     void onRequestSettings(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
@@ -384,8 +415,16 @@ public class IpcTopics {
     }
 
     void onLogout(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
-        this.launcher.getConfig().setProfile(null);
-        this.ipcHandler.send("show_login_form", new JsonObject());
+        this.launcher.getConfig().removeProfile(0);
+        this.launcher.saveConfig();
+        this.ipcHandler.send("update_profiles", this.launcher.getConfig().getGameProfiles());
+
+        if(this.launcher.getConfig().getGameProfiles().size() == 0) {
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("newProfile", true);
+
+            this.ipcHandler.send("show_login_form", jsonObject);
+        }
     }
 
     void onRequestPosts(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {

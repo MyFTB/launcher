@@ -150,6 +150,7 @@ public class Launcher {
     private void setupIpcCommunication() {
         this.ipcHandler.listenAsync("renderer_arrived", this.ipcTopics::onRendererArrived);
         this.ipcHandler.listenAsync("mc_login", this.ipcTopics::onMcLogin);
+        this.ipcHandler.listenAsync("switch_profile", this.ipcTopics::onSwitchProfile);
         this.ipcHandler.listen("request_settings", this.ipcTopics::onRequestSettings);
         this.ipcHandler.listen("submit_settings", this.ipcTopics::onSubmitSettings);
         this.ipcHandler.listenAsync("open_url", this.ipcTopics::onOpenUrl);
@@ -176,10 +177,9 @@ public class Launcher {
      * @throws AuthenticationException Fehler bei der Anmeldung
      */
     void login() throws AuthenticationException {
-        this.config.getProfile().logIn();
+        this.config.getSelectedProfile().logIn();
         this.saveConfig();
-        Launcher.log.info("Minecraft Account angemeldet: " + this.config.getProfile().getSelectedProfile());
-        this.ipcHandler.send("logged_in", this.config.getProfile().getSelectedProfile());
+        Launcher.log.info("Minecraft Account angemeldet: " + this.config.getGameProfiles());
 
         if (this.firstStart) {
             this.firstStart = false;
@@ -296,13 +296,15 @@ public class Launcher {
     }
 
     public void launchModpack(ModpackManifest manifest, Runnable launchingCallback) throws IOException, InterruptedException {
-        if (this.config.getProfile() == null) {
-            this.ipcHandler.send("show_login_form", new JsonObject());
+        if (this.config.getSelectedProfile() == null) {
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("newProfile", this.config.getGameProfiles().size() == 0);
+            this.ipcHandler.send("show_login_form", jsonObject);
             return;
         }
 
         boolean loggedIn = false;
-        if (this.config.getProfile().isLoggedIn() || this.config.getProfile().canLogIn()) {
+        if (this.config.getSelectedProfile().isLoggedIn() || this.config.getSelectedProfile().canLogIn()) {
             try {
                 this.login();
                 loggedIn = true;
@@ -313,7 +315,7 @@ public class Launcher {
 
         if (!loggedIn) {
             JsonObject jsonObject = new JsonObject();
-            Map<String, Object> profileData = this.config.getProfile().saveForStorage();
+            Map<String, Object> profileData = this.config.getSelectedProfile().saveForStorage();
             if (profileData.containsKey("username")) {
                 jsonObject.addProperty("username", (String) profileData.get("username"));
             }
@@ -324,7 +326,7 @@ public class Launcher {
         launchingCallback.run();
         this.config.addLastPlayedPack(manifest.getName());
         this.saveConfig();
-        LaunchMinecraft.launch(manifest, this.config.getProfile());
+        LaunchMinecraft.launch(manifest, this.config.getSelectedProfile());
     }
 
     public LauncherConfig getConfig() {

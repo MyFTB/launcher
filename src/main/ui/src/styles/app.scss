@@ -59,7 +59,7 @@ $sidebarWidth: $iconSize + 180px;
     }
 
     > ul {
-        > li {
+        > li, div > li {
             width: $sidebarWidth;
             margin-top: 20px;
 
@@ -68,16 +68,18 @@ $sidebarWidth: $iconSize + 180px;
             }
 
             &.profile {
+                margin-top: 0;
                 color: #eee;
                 text-decoration: none;
                 font-weight: 400;
                 display: flex;
                 align-items: center;
-                position: absolute;
+                position: relative;
                 bottom: 0;
                 font-size: 13px;
                 transition: color .2s;
                 cursor: pointer;
+                transform: scaleY(-1);
 
                 > img {
                     width: 48px;
@@ -86,9 +88,53 @@ $sidebarWidth: $iconSize + 180px;
                     border-radius: 10px;
                 }
 
-                &:hover {
-                    color: red;
+                > span {
+                    margin-left: 1px;
                 }
+            }
+        }
+
+        > li:hover {
+            color: red;
+        }
+
+        &.profiles {
+            position: absolute;
+            bottom: -17px;
+            transform: scaleY(-1);
+        }
+
+        > div {
+            &.fade-enter {
+                opacity: 0;
+            }
+
+            &.fade-enter-active {
+                opacity: 1;
+                transition: opacity .3s;
+            }
+
+            &.fade-exit-active {
+                opacity: 0;
+                transition: opacity .2s;
+            }
+
+            > li {
+                &:last-child {
+                    height: 48px;
+
+                }
+
+                &:hover {
+                    color: #83da38;
+                }
+            }
+
+            .svg-inline--fa {
+                font-size: $iconSize / 1.33;
+                width: $iconSize;
+                margin-right: 0;
+                padding-bottom: 0;
             }
         }
 

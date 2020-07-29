@@ -27,6 +27,10 @@
     .form-group {
         margin-bottom: 10px;
 
+        .btn {
+            margin-left: 0 !important;
+        }
+
         .login-btn {
             float: right;
         }

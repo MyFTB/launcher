@@ -29,7 +29,7 @@ export default class Main extends React.Component {
     }
 
     componentDidMount() {
-        window.launcher.registerLoginRerender(this);
+        window.launcher.registerUpdateProfilesRerender(this);
 
         window.launcher.sendIpc('request_recent_packs', false, (err, data) => {
             if (err) {
@@ -40,11 +40,11 @@ export default class Main extends React.Component {
     }
 
     componentWillUnmount() {
-        window.launcher.unregisterLoginRerender(this);
+        window.launcher.unregisterUpdateProfilesRerender(this);
     }
 
-    onLogin(profile) {
-        this.setState({username: profile.name});
+    onUpdateProfiles(profiles) {
+        (profiles.length === 0) ? this.setState({username: false}) : this.setState({username: profiles[0].name});
     }
 
     onModpackClick(index) {

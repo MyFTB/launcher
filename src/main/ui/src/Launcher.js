@@ -25,6 +25,7 @@ import ProgressBar from './components/base/ProgressBar.react';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTerminal, faUpload, faSkull } from '@fortawesome/free-solid-svg-icons'
+import Sidebar from "./components/Sidebar.react";
 
 library.add(faTerminal);
 library.add(faUpload);
@@ -35,8 +36,8 @@ class Launcher extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            loading: true, loginForm: false, loginFormPrefill: false, loginDisabled: true, loginError: '', 
-            profile: false, dialog: false, dialogCloseable: false, loginListeners: [], modpackRunning: false,
+            loading: true, loginForm: false, loginFormPrefill: false, newProfile: true, loginDisabled: true, loginError: '',
+            profiles: false, dialog: false, dialogCloseable: false, loginListeners: [], modpackRunning: false,
             featureMessage: false, featureCallback: false, installationStatus: false,
             welcomeMessage: false
         };
@@ -46,6 +47,7 @@ class Launcher extends React.Component {
         this.handleLoginInput = this.handleLoginInput.bind(this);
         this.handleLogin = this.handleLogin.bind(this);
         this.handlePasswordKeyDown = this.handlePasswordKeyDown.bind(this);
+        this.handleCancelLogin = this.handleCancelLogin.bind(this);
         this.resetDialog = this.resetDialog.bind(this);
 
         this.acceptFeatureDialog = this.acceptFeatureDialog.bind(this);
@@ -57,15 +59,15 @@ class Launcher extends React.Component {
         this.onInstallDialogClick = this.onInstallDialogClick.bind(this);
         this.cancelDownload = this.cancelDownload.bind(this);
 
-        this.listenIpc('logged_in', (err, data) => {
+        this.listenIpc('update_profiles', (err, data) => {
             if (!err) {
-                this.setState({profile: data});
-                this.state.loginListeners.forEach(comp => comp.onLogin(data));
+                this.setState({profiles: data});
+                this.state.loginListeners.forEach(comp => comp.onUpdateProfiles(data));
             }
         });
 
         this.listenIpc('show_login_form', (err, data) => {
-            this.setState({loginForm: true, loginFormPrefill: data.username});
+            this.showLoginForm(data.username, data.newProfile);
         });
 
         this.listenIpc('launch_pack', (err, data) => {
@@ -106,7 +108,7 @@ class Launcher extends React.Component {
             }
             this.loading(false);
             if (data.login_needed) {
-                this.setState({loginForm: true, loginFormPrefill: data.login_username});
+                this.showLoginForm(data.login_username, data.newProfile);
             }
         });
     }
@@ -148,14 +150,14 @@ class Launcher extends React.Component {
 
     /* ============================================================ Login Rerender ============================================================ */
 
-    registerLoginRerender(comp) {
+    registerUpdateProfilesRerender(comp) {
         this.setState(prevState => { return {loginListeners: prevState.loginListeners.concat([comp])} });
-        if (this.state.profile) {
-            comp.onLogin(this.state.profile);
+        if (this.state.profiles) {
+            comp.onUpdateProfiles(this.state.profiles);
         }
     }
 
-    unregisterLoginRerender(comp) {
+    unregisterUpdateProfilesRerender(comp) {
         this.setState({ loginListeners: this.state.loginListeners.filter(value => value !== comp) });
     }
 
@@ -200,7 +202,7 @@ class Launcher extends React.Component {
 
     handleLogin() {
         this.loading(true);
-        this.sendIpc('mc_login', {username: document.getElementById('username').value, password: document.getElementById('password').value}, (err, data) => {
+        this.sendIpc('mc_login', {username: document.getElementById('username').value, password: document.getElementById('password').value, newProfile: this.state.newProfile}, (err, data) => {
             this.loading(false);
             if (err) {
                 this.setState({loginError: err});
@@ -217,9 +219,16 @@ class Launcher extends React.Component {
         }
     }
 
+    handleCancelLogin() {
+        this.setState({loginForm: false});
+    }
+
+    switchProfile(index) {
+        this.sendIpc('switch_profile', {index: index});
+    }
+
     logout() {
         this.sendIpc('logout');
-        this.state.loginListeners.forEach(comp => comp.onLogin(false));
     }
 
     /* ============================================================ Features ============================================================ */
@@ -300,6 +309,10 @@ class Launcher extends React.Component {
         this.sendIpc('kill_minecraft', false);
     }
 
+    showLoginForm(loginFormPrefill, newProfile) {
+        this.setState({loginForm: true, loginFormPrefill: loginFormPrefill, newProfile: newProfile, loginError: ''})
+    }
+
     render() {
         return (
             <div>
@@ -318,6 +331,9 @@ class Launcher extends React.Component {
                             </div>
                             <div className="form-group">
                                 <button className="btn login-btn" onClick={this.handleLogin} disabled={this.state.loginDisabled}>Anmelden</button>
+                                {this.state.profiles.length > 0 && (
+                                    <button className="btn" onClick={this.handleCancelLogin}>Abbrechen</button>
+                                )}
                             </div>
                         </div>
                     </div>
