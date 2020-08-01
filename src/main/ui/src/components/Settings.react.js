@@ -118,7 +118,7 @@ export default class Settings extends React.Component {
                 </div>
                 <div className="form-group">
                     <p>Java Argumente</p>
-                    <input {...this.getOptionAttributes('jvmArgs')} type="text"></input>
+                    <input {...this.getOptionAttributes('jvmArgs')} type="text" spellCheck="false"></input>
                 </div>
                 <div className="form-group">
                     <p>Breite des Spielfensters in Pixel</p>
@@ -130,11 +130,11 @@ export default class Settings extends React.Component {
                 </div>
                 <div className="form-group">
                     <p>Modpackschlüssel</p>
-                    <input {...this.getOptionAttributes('packKey')} type="text"></input>
+                    <input {...this.getOptionAttributes('packKey')} type="text" spellCheck="false"></input>
                 </div>
                 <div className="form-group">
                     <p>Benutzerdefiniertes Speicherverzeichnis</p>
-                    <input {...this.getOptionAttributes('installationDir')} ref="installationDir" type="text" className="dir-chooser"></input>
+                    <input {...this.getOptionAttributes('installationDir')} ref="installationDir" type="text" className="dir-chooser" spellCheck="false"></input>
                     <button onClick={this.doInstallDirSelection}>...</button>
                 </div>
                 <div className="form-group">

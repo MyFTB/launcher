@@ -322,7 +322,7 @@ class Launcher extends React.Component {
                             {this.state.loginError && <div className="error-alert">{this.state.loginError}</div>}
                             <div className="form-group">
                                 <p>Benutzername / Email</p>
-                                <input type="text" id="username" key={this.state.loginFormPrefill ? 'prefilled' : 'empty'} onInput={this.handleLoginInput} defaultValue={this.state.loginFormPrefill}></input>
+                                <input type="text" id="username" key={this.state.loginFormPrefill ? 'prefilled' : 'empty'} onInput={this.handleLoginInput} defaultValue={this.state.loginFormPrefill} spellCheck="false"></input>
                             </div>
                             <div className="form-group">
                                 <p>Passwort</p>
