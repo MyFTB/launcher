@@ -44,7 +44,7 @@ export default class Main extends React.Component {
     }
 
     onUpdateProfiles(profiles) {
-        (profiles.length === 0) ? this.setState({username: false}) : this.setState({username: profiles[0].name});
+        this.setState({username: profiles.length === 0 ? false : profiles[0].name});
     }
 
     onModpackClick(index) {

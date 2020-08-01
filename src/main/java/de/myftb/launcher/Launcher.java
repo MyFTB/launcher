@@ -298,7 +298,7 @@ public class Launcher {
     public void launchModpack(ModpackManifest manifest, Runnable launchingCallback) throws IOException, InterruptedException {
         if (this.config.getSelectedProfile() == null) {
             JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("newProfile", this.config.getGameProfiles().size() == 0);
+            jsonObject.addProperty("new_profile", this.config.getGameProfiles().size() == 0);
             this.ipcHandler.send("show_login_form", jsonObject);
             return;
         }

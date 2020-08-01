@@ -44,7 +44,14 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.swing.JFileChooser;
@@ -72,7 +79,7 @@ public class IpcTopics {
 
         if (this.launcher.getConfig().getSelectedProfile() == null) {
             cbResponse.addProperty("login_needed", true);
-            cbResponse.addProperty("newProfile", true);
+            cbResponse.addProperty("new_profile", true);
         } else {
             Map<String, Object> profileData = this.launcher.getConfig().getSelectedProfile().saveForStorage();
             if (profileData.containsKey("username")) {
@@ -81,14 +88,14 @@ public class IpcTopics {
 
             if (!this.launcher.getConfig().getSelectedProfile().isLoggedIn() && !this.launcher.getConfig().getSelectedProfile().canLogIn()) {
                 cbResponse.addProperty("login_needed", true);
-                cbResponse.addProperty("newProfile", false);
+                cbResponse.addProperty("new_profile", false);
             } else {
                 try {
                     this.launcher.login();
                 } catch (AuthenticationException e) {
                     IpcTopics.log.warn("Fehler beim Login", e);
                     cbResponse.addProperty("login_needed", true);
-                    cbResponse.addProperty("newProfile", false);
+                    cbResponse.addProperty("new_profile", false);
                 }
             }
         }
@@ -97,7 +104,7 @@ public class IpcTopics {
     }
 
     void onMcLogin(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
-        if(data.get("newProfile").getAsBoolean()) {
+        if(data.get("new_profile").getAsBoolean()) {
             this.launcher.getConfig().addProfile(this.launcher.getConfig().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT));
         } else {
             this.launcher.getConfig().setProfile(0, this.launcher.getConfig().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT));
@@ -133,7 +140,7 @@ public class IpcTopics {
             Map<String, Object> profileData = this.launcher.getConfig().getSelectedProfile().saveForStorage();
             if (profileData.containsKey("username")) {
                 jsonObject.addProperty("username", (String) profileData.get("username"));
-                jsonObject.addProperty("newProfile", false);
+                jsonObject.addProperty("new_profile", false);
             }
             this.ipcHandler.send("show_login_form", jsonObject);
         }
@@ -421,7 +428,7 @@ public class IpcTopics {
 
         if(this.launcher.getConfig().getGameProfiles().size() == 0) {
             JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("newProfile", true);
+            jsonObject.addProperty("new_profile", true);
 
             this.ipcHandler.send("show_login_form", jsonObject);
         }

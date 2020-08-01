@@ -25,7 +25,6 @@ import ProgressBar from './components/base/ProgressBar.react';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTerminal, faUpload, faSkull } from '@fortawesome/free-solid-svg-icons'
-import Sidebar from "./components/Sidebar.react";
 
 library.add(faTerminal);
 library.add(faUpload);
