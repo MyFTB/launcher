@@ -66,7 +66,7 @@ class Launcher extends React.Component {
         });
 
         this.listenIpc('show_login_form', (err, data) => {
-            this.showLoginForm(data.username, data.newProfile);
+            this.showLoginForm(data.username, data.new_profile);
         });
 
         this.listenIpc('launch_pack', (err, data) => {
@@ -107,7 +107,7 @@ class Launcher extends React.Component {
             }
             this.loading(false);
             if (data.login_needed) {
-                this.showLoginForm(data.login_username, data.newProfile);
+                this.showLoginForm(data.login_username, data.new_profile);
             }
         });
     }
@@ -201,7 +201,7 @@ class Launcher extends React.Component {
 
     handleLogin() {
         this.loading(true);
-        this.sendIpc('mc_login', {username: document.getElementById('username').value, password: document.getElementById('password').value, newProfile: this.state.newProfile}, (err, data) => {
+        this.sendIpc('mc_login', {username: document.getElementById('username').value, password: document.getElementById('password').value, new_profile: this.state.newProfile}, err => {
             this.loading(false);
             if (err) {
                 this.setState({loginError: err});

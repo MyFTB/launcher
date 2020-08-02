@@ -104,7 +104,7 @@ public class IpcTopics {
     }
 
     void onMcLogin(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
-        if(data.get("new_profile").getAsBoolean()) {
+        if (data.get("new_profile").getAsBoolean()) {
             this.launcher.getConfig().addProfile(this.launcher.getConfig().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT));
         } else {
             this.launcher.getConfig().setProfile(0, this.launcher.getConfig().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT));
@@ -114,13 +114,12 @@ public class IpcTopics {
         try {
             this.launcher.login();
 
-            int index = 0;
-            for (UserAuthentication profile : this.launcher.getConfig().getProfiles()) {
-                if(index > 0 && this.launcher.getConfig().getSelectedProfile().getUserID().equals(profile.getUserID())) {
-                    this.launcher.getConfig().removeProfile(index);
+            List<UserAuthentication> profiles = this.launcher.getConfig().getProfiles();
+            for (int i = 0; i < profiles.size(); i++) {
+                if (i > 0 && this.launcher.getConfig().getSelectedProfile().getUserID().equals(profiles.get(i).getUserID())) {
+                    this.launcher.getConfig().removeProfile(i);
                     break;
                 }
-                index++;
             }
 
             this.ipcHandler.send("update_profiles", this.launcher.getConfig().getGameProfiles());
@@ -426,7 +425,7 @@ public class IpcTopics {
         this.launcher.saveConfig();
         this.ipcHandler.send("update_profiles", this.launcher.getConfig().getGameProfiles());
 
-        if(this.launcher.getConfig().getGameProfiles().size() == 0) {
+        if (this.launcher.getConfig().getGameProfiles().size() == 0) {
             JsonObject jsonObject = new JsonObject();
             jsonObject.addProperty("new_profile", true);
 

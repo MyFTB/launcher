@@ -187,7 +187,7 @@ public class LauncherConfig {
         }
 
         LauncherConfig config = this.gson.fromJson(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8), LauncherConfig.class);
-        if(config.getProfile() != null && config.getProfiles().size() == 0) {
+        if (config.getProfile() != null && config.getProfiles().size() == 0) {
             config.addProfile(config.getProfile());
         }
         return config;
