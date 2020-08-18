@@ -51,7 +51,7 @@ export default class PackSearch extends React.Component {
         return (
             <div className="clearfix pack-search-bar">
                 <div className="pack-search">
-                    <input type="text" placeholder="Suche" ref="search" onChange={this.onSearchChanged}></input>
+                    <input type="text" placeholder="Suche" ref="search" onChange={this.onSearchChanged} spellCheck="false"></input>
                     <select ref="version" onChange={this.onSearchChanged}>
                         <option value="all">Alle</option>
                         {this.props.versions.map((version, i) => {

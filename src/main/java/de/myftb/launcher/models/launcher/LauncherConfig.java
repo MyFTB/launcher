@@ -23,6 +23,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.mojang.authlib.AuthenticationService;
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.UserAuthentication;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.sun.management.OperatingSystemMXBean;
@@ -64,7 +65,8 @@ public class LauncherConfig {
 
     @Expose private String packKey = "";
     @Expose private String installationDir = "";
-    @Expose private UserAuthentication profile = null;
+    @Expose(serialize = false) private UserAuthentication profile = null;
+    @Expose private List<UserAuthentication> profiles = new LinkedList<>();
     @Expose private boolean allowWebstart = true;
     @Expose private List<String> lastPlayedPacks = new LinkedList<>();
     @Expose private Map<String, String> autoConfigs = new HashMap<>();
@@ -101,12 +103,37 @@ public class LauncherConfig {
         return this.installationDir;
     }
 
-    public void setProfile(UserAuthentication profile) {
-        this.profile = profile;
-    }
-
     public UserAuthentication getProfile() {
         return this.profile;
+    }
+
+    public UserAuthentication getSelectedProfile() {
+        return this.profiles.size() != 0 ? this.profiles.get(0) : null;
+    }
+
+    public void setSelectedProfile(int index) {
+        UserAuthentication profile = this.profiles.remove(index);
+        this.profiles.add(0, profile);
+    }
+
+    public void setProfile(int index, UserAuthentication profile) {
+        this.profiles.set(index, profile);
+    }
+
+    public void removeProfile(int index) {
+        this.profiles.remove(index);
+    }
+
+    public List<UserAuthentication> getProfiles() {
+        return this.profiles;
+    }
+
+    public List<GameProfile> getGameProfiles() {
+        return this.profiles.stream().map(UserAuthentication::getSelectedProfile).collect(Collectors.toList());
+    }
+
+    public void addProfile(UserAuthentication profile) {
+        this.profiles.add(0, profile);
     }
 
     public boolean isAllowWebstart() {
@@ -155,11 +182,15 @@ public class LauncherConfig {
 
     public LauncherConfig readConfig(File dir) throws IOException {
         File configFile = new File(dir, "config.json");
-        if (configFile.isFile()) {
-            return this.gson.fromJson(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8), LauncherConfig.class);
+        if (!configFile.isFile()) {
+            return this;
         }
 
-        return this;
+        LauncherConfig config = this.gson.fromJson(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8), LauncherConfig.class);
+        if (config.getProfile() != null && config.getProfiles().size() == 0) {
+            config.addProfile(config.getProfile());
+        }
+        return config;
     }
 
     private static int getDefaultMemory() {

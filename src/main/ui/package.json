@@ -34,6 +34,7 @@
     "webpack-dev-server": "^3.10.1"
   },
   "dependencies": {
-    "react-lazylog": "^4.5.0"
+    "react-lazylog": "^4.5.0",
+    "react-transition-group": "^4.4.1"
   }
 }

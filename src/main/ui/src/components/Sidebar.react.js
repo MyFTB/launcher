@@ -18,37 +18,48 @@
 
 import React from 'react';
 import { NavLink } from "react-router-dom";
+import { CSSTransition } from 'react-transition-group';
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHome, faNewspaper, faBoxOpen, faCloud, faCogs } from '@fortawesome/free-solid-svg-icons'
+import { faHome, faNewspaper, faBoxOpen, faCloud, faCogs, faPlusSquare } from '@fortawesome/free-solid-svg-icons'
 
 library.add(faHome);
 library.add(faNewspaper);
 library.add(faBoxOpen);
 library.add(faCloud);
 library.add(faCogs);
+library.add(faPlusSquare);
 
 export default class Sidebar extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {profile: false, hoverLogout: false};
+        this.state = {profiles: false, hoverLogout: false, maxDisplayableProfiles: 4};
         this.onProfileMouseEnter = this.onProfileMouseEnter.bind(this);
         this.onProfileMouseLeave = this.onProfileMouseLeave.bind(this);
         this.onProfileClick = this.onProfileClick.bind(this);
+        this.onAddProfileClick = this.onAddProfileClick.bind(this);
+        this.onProfileLogoutClick = this.onProfileLogoutClick.bind(this);
     }
 
     componentDidMount() {
-        window.launcher.registerLoginRerender(this);
+        window.launcher.registerUpdateProfilesRerender(this);
+        window.addEventListener('resize', () =>  {
+            const sidebar = document.getElementsByClassName('sidebar')[0];
+            const sidebarHeight = sidebar.clientHeight;
+            const navHeight = sidebar.getElementsByTagName('ul')[0].clientHeight;
+
+            this.setState({maxDisplayableProfiles: Math.ceil((sidebarHeight - navHeight) / 2 / 48)});
+        });
     }
 
     componentWillUnmount() {
-        window.launcher.unregisterLoginRerender(this);
+        window.launcher.unregisterUpdateProfilesRerender(this);
     }
 
-    onLogin(profile) {
-        this.setState({profile: profile});
+    onUpdateProfiles(profiles) {
+        this.setState({profiles: profiles});
     }
 
     onProfileMouseEnter() {
@@ -59,7 +70,15 @@ export default class Sidebar extends React.Component {
         this.setState({hoverLogout: false});
     }
 
-    onProfileClick() {
+    onProfileClick(i) {
+        window.launcher.switchProfile(i)
+    }
+
+    onAddProfileClick() {
+        window.launcher.showLoginForm('', true)
+    }
+
+    onProfileLogoutClick() {
         window.launcher.logout();
     }
 
@@ -72,13 +91,35 @@ export default class Sidebar extends React.Component {
                     <li><NavLink to="/modpacks" activeClassName="active"><FontAwesomeIcon icon="box-open"/> Installierte Modpacks</NavLink></li>
                     <li><NavLink to="/install" activeClassName="active"><FontAwesomeIcon icon="cloud"/> Verfügbare Modpacks</NavLink></li>
                     <li><NavLink to="/settings" activeClassName="active"><FontAwesomeIcon icon="cogs"/> Einstellungen</NavLink></li>
-                    
-                    {this.state.profile && (
-                        <li className="profile" onMouseEnter={this.onProfileMouseEnter} onMouseLeave={this.onProfileMouseLeave} onClick={this.onProfileClick}>
-                            <img src={"playerhead://launcher/" + this.state.profile.id}></img>
-                            {this.state.hoverLogout ? (<span>Abmelden</span>) : (<span>Angemeldet als: {this.state.profile.name}</span>)}
+                </ul>
+                <ul className="profiles">
+                    {this.state.profiles && this.state.profiles.length > 0 && (
+                        <li className="profile" onMouseEnter={this.onProfileMouseEnter} onMouseLeave={this.onProfileMouseLeave} onClick={this.onProfileLogoutClick}>
+                            <img src={"playerhead://launcher/" + this.state.profiles[0].id}></img>
+                            {this.state.hoverLogout ? (<span>Abmelden</span>) : (<span>Angemeldet als: {this.state.profiles[0].name}</span>)}
                         </li>
                     )}
+                    <CSSTransition in={this.state.hoverLogout} timeout={200} classNames={"fade"} unmountOnExit>
+                        <div onMouseEnter={this.onProfileMouseEnter} onMouseLeave={this.onProfileMouseLeave}>
+                            {this.state.profiles.length > 1 && (
+                                this.state.profiles.map((profile, i) => {
+                                    if (i === 0 || i > this.state.maxDisplayableProfiles - 2) return;
+                                    return (
+                                        <li className="profile" key={i} onClick={() => this.onProfileClick(i)}>
+                                            <img src={"playerhead://launcher/" + profile.id}></img>
+                                            <span>Wechseln zu: {profile.name}</span>
+                                        </li>
+                                    )
+                                })
+                            )}
+                            {this.state.profiles.length > 0 && (
+                                <li className="profile" onClick={() => this.onAddProfileClick()}>
+                                    <FontAwesomeIcon icon="plus-square"/>
+                                    <span>Benutzer hinzufügen</span>
+                                </li>
+                            )}
+                        </div>
+                    </CSSTransition>
                 </ul>
             </div>
         )
