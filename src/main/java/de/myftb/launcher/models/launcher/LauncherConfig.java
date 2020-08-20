@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -129,7 +130,7 @@ public class LauncherConfig {
     }
 
     public List<GameProfile> getGameProfiles() {
-        return this.profiles.stream().map(UserAuthentication::getSelectedProfile).collect(Collectors.toList());
+        return this.profiles.stream().map(UserAuthentication::getSelectedProfile).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public void addProfile(UserAuthentication profile) {
