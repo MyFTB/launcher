@@ -41,7 +41,7 @@ dependencies {
 	compile group: 'com.github.vatbub', name: 'mslinks', version: '1.0.5'
 	compile group: 'org.jclarion', name: 'image4j', version: '0.7'
 	compile group: 'io.sentry', name: 'sentry', version: '1.7.30'
-	compile group: 'io.sentry', name: 'sentry-logback', version: '1.7.29'
+	compile group: 'io.sentry', name: 'sentry-logback', version: '3.1.2'
 
 	shadow files(os.contains("mac") ? 'run/jcef/jcef_app.app/Contents/Java/jcef.jar' : 'run/jcef/jcef.jar')
 	appbundler files('lib/appbundler-1.0ea.jar')
