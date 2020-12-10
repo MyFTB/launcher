@@ -23,7 +23,6 @@ import ToggleSwitch from './ToggleSwitch.react';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faMinus } from '@fortawesome/free-solid-svg-icons'
-import { runInThisContext } from 'vm';
 
 library.add(faPlus);
 library.add(faMinus);

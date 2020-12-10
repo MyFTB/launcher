@@ -387,7 +387,10 @@ public class Launcher {
                     new BasicNameValuePair("environment", Launcher.development ? "development" : "production"),
                     new BasicNameValuePair("stacktrace.app.packages", "de.myftb.launcher")
             ), StandardCharsets.UTF_8);
-            Sentry.init(dsn + "?" + sentryParameters);
+            Sentry.init(options -> {
+                options.setDsn(dsn + "?" + sentryParameters);
+                options.setRelease("de.myftb.launcher@" + Launcher.getVersion());
+            });
         }
 
         Launcher.instance = new Launcher(args);

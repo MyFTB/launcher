@@ -37,14 +37,30 @@ import org.slf4j.LoggerFactory;
 public class MavenDownloadCallable extends DownloadCallable {
     private static final Logger log = LoggerFactory.getLogger(MavenDownloadCallable.class);
 
+    private final String repoUrl;
+
+    public MavenDownloadCallable(String repoUrl, String artifact, File targetFile) {
+        super(new Downloadable(artifact, null, targetFile));
+        this.repoUrl = repoUrl;
+    }
 
     public MavenDownloadCallable(String artifact, File targetFile) {
-        super(new Downloadable(artifact, null, targetFile));
+        this(null, artifact, targetFile);
     }
 
     @Override
     public File call() throws Exception {
         String path = new MavenHelper.MavenArtifact(this.downloadable.url).getFilePath();
+
+        if (this.repoUrl != null) {
+            try {
+                return this.tryRepository(this.repoUrl, path);
+            } catch (IOException e) {
+                if (!(e instanceof HttpResponseException) || ((HttpResponseException) e).getStatusCode() != 404) {
+                    MavenDownloadCallable.log.warn("Fehler beim Herunterladen von Maven-Artefakt: " + this.downloadable.url, e);
+                }
+            }
+        }
 
         for (String repository : Constants.repositories) {
             try {

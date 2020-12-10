@@ -278,7 +278,7 @@ class Launcher extends React.Component {
 
         this.sendIpc('launch_modpack', {modpack: modpack.name}, this.generalFeatureCallback('launch_modpack', data => {
             if (data.installing) {
-                this.setState({installationStatus: {progress: data.installing, pack: modpack.title}});
+                this.setState({installationStatus: {progress: data.installing, pack: modpack}});
             } else if (data.installed) {
                 this.setState({installationStatus: false});
             } else if (data.launching) {

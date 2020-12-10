@@ -38,6 +38,7 @@ public class Library {
     private Map<String, String> natives;
     private Map<String, List<String>> extract;
     private List<Rule> rules;
+    private String url;
 
     public String getName() {
         return this.name;
@@ -109,6 +110,10 @@ public class Library {
                                     classifierDownload.path))));
                 }
             }
+
+        } else if (this.url != null) {
+            downloads.add(new MavenDownloadCallable(this.url, this.name, new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
+                    this.getPath(null))));
         } else {
             downloads.add(new MavenDownloadCallable(this.name, new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
                     this.getPath(null))));
