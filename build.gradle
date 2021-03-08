@@ -40,7 +40,7 @@ dependencies {
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '5.0.4'
 	compile group: 'com.github.vatbub', name: 'mslinks', version: '1.0.5'
 	compile group: 'org.jclarion', name: 'image4j', version: '0.7'
-	compile group: 'io.sentry', name: 'sentry', version: '3.2.0'
+	compile group: 'io.sentry', name: 'sentry', version: '4.3.0'
 	compile group: 'io.sentry', name: 'sentry-logback', version: '3.2.0'
 
 	compile files(os.contains("mac") ? 'run/jcef/jcef_app.app/Contents/Java/jcef.jar' : 'run/jcef/jcef.jar')
