@@ -70,12 +70,12 @@ export default class Sidebar extends React.Component {
         this.setState({hoverLogout: false});
     }
 
-    onProfileClick(i) {
-        window.launcher.switchProfile(i)
+    onProfileClick(uuid) {
+        window.launcher.switchProfile(uuid)
     }
 
     onAddProfileClick() {
-        window.launcher.showLoginForm('', true)
+        window.launcher.showLoginForm()
     }
 
     onProfileLogoutClick() {
@@ -95,19 +95,20 @@ export default class Sidebar extends React.Component {
                 <ul className="profiles">
                     {this.state.profiles && this.state.profiles.length > 0 && (
                         <li className="profile" onMouseEnter={this.onProfileMouseEnter} onMouseLeave={this.onProfileMouseLeave} onClick={this.onProfileLogoutClick}>
-                            <img src={"playerhead://launcher/" + this.state.profiles[0].id}></img>
-                            {this.state.hoverLogout ? (<span>Abmelden</span>) : (<span>Angemeldet als: {this.state.profiles[0].name}</span>)}
+                            <img src={"playerhead://launcher/" + this.state.profiles[0].uuid}></img>
+                            {this.state.hoverLogout ? (<span>Abmelden</span>) : (<span>Angemeldet als: {this.state.profiles[0].lastKnownUsername}</span>)}
                         </li>
                     )}
+                    
                     <CSSTransition in={this.state.hoverLogout} timeout={200} classNames={"fade"} unmountOnExit>
                         <div onMouseEnter={this.onProfileMouseEnter} onMouseLeave={this.onProfileMouseLeave}>
                             {this.state.profiles.length > 1 && (
                                 this.state.profiles.map((profile, i) => {
                                     if (i === 0 || i > this.state.maxDisplayableProfiles - 2) return;
                                     return (
-                                        <li className="profile" key={i} onClick={() => this.onProfileClick(i)}>
-                                            <img src={"playerhead://launcher/" + profile.id}></img>
-                                            <span>Wechseln zu: {profile.name}</span>
+                                        <li className="profile" key={i} onClick={() => this.onProfileClick(profile.uuid)}>
+                                            <img src={"playerhead://launcher/" + profile.uuid}></img>
+                                            <span>Wechseln zu: {profile.lastKnownUsername}</span>
                                         </li>
                                     )
                                 })
@@ -120,6 +121,15 @@ export default class Sidebar extends React.Component {
                             )}
                         </div>
                     </CSSTransition>
+
+                    <div>
+                        {this.state.profiles.length == 0 && (
+                            <li className="profile" onClick={() => this.onAddProfileClick()}>
+                                <FontAwesomeIcon icon="plus-square"/>
+                                <span>Benutzer hinzufügen</span>
+                            </li>
+                        )}
+                    </div>
                 </ul>
             </div>
         )

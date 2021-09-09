@@ -1,6 +1,6 @@
 /*
  * MyFTBLauncher
- * Copyright (C) 2020 MyFTB <https://myftb.de>
+ * Copyright (C) 2021 MyFTB <https://myftb.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,27 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.logging;
+package de.myftb.launcher.login.microsoft.models;
 
-import java.io.File;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
+import java.util.UUID;
 
-public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
-    private static boolean rolled = false;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MinecraftProfile {
+    private String id;
+    private String name;
 
-    @Override
-    public boolean isTriggeringEvent(File activeFile, T event) {
-        if (!StartupRollTriggeringPolicy.rolled) {
-            StartupRollTriggeringPolicy.rolled = true;
-            if (activeFile.length() == 0) {
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
+    public String getId() {
+        return this.id;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
+    public UUID getUuid() {
+        return UUID.fromString(this.id.substring(0, 8) + "-" + this.id.substring(8, 12) + "-" + this.id.substring(12, 16) + "-"
+                + this.id.substring(16, 20) + "-" + this.id.substring(20, 32));
+    }
 }

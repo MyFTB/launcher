@@ -23,14 +23,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.mojang.authlib.Agent;
-import com.mojang.authlib.UserAuthentication;
-import com.mojang.authlib.exceptions.AuthenticationException;
 
 import de.myftb.launcher.cef.ipc.TopicMessageHandler;
 import de.myftb.launcher.launch.LaunchHelper;
 import de.myftb.launcher.launch.LaunchMinecraft;
 import de.myftb.launcher.launch.ManifestHelper;
+import de.myftb.launcher.login.LoginException;
+import de.myftb.launcher.login.microsoft.MicrosoftLogin;
+import de.myftb.launcher.login.mojang.MojangLogin;
 import de.myftb.launcher.models.launcher.Platform;
 import de.myftb.launcher.models.modpacks.ModpackManifest;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
@@ -48,7 +48,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,6 +56,7 @@ import java.util.stream.StreamSupport;
 import javax.swing.JFileChooser;
 
 import mslinks.ShellLink;
+
 import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,79 +73,63 @@ public class IpcTopics {
     }
 
     void onRendererArrived(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
-        JsonObject cbResponse = new JsonObject();
+        this.launcher.getConfig().getLauncherProfileStore().syncUiProfiles();
+        callback.success(new JsonObject());
 
-        this.ipcHandler.send("update_profiles", this.launcher.getConfig().getGameProfiles());
-
-        if (this.launcher.getConfig().getSelectedProfile() == null) {
-            cbResponse.addProperty("login_needed", true);
-            cbResponse.addProperty("new_profile", true);
-        } else {
-            Map<String, Object> profileData = this.launcher.getConfig().getSelectedProfile().saveForStorage();
-            if (profileData.containsKey("username")) {
-                cbResponse.addProperty("login_username", (String) profileData.get("username"));
-            }
-
-            if (!this.launcher.getConfig().getSelectedProfile().isLoggedIn() && !this.launcher.getConfig().getSelectedProfile().canLogIn()) {
-                cbResponse.addProperty("login_needed", true);
-                cbResponse.addProperty("new_profile", false);
-            } else {
-                try {
-                    this.launcher.login();
-                } catch (AuthenticationException e) {
-                    IpcTopics.log.warn("Fehler beim Login", e);
-                    cbResponse.addProperty("login_needed", true);
-                    cbResponse.addProperty("new_profile", false);
-                }
-            }
+        if (this.launcher.isFirstStart()) {
+            this.launcher.setFirstStart(false);
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("installation_dir", this.launcher.getSaveDirectory().getAbsolutePath());
+            this.ipcHandler.send("welcome_message", jsonObject);
         }
 
-        callback.success(cbResponse);
+        if (this.launcher.getLaunchPack() != null) {
+            String pack = this.launcher.getLaunchPack();
+            this.launcher.setLaunchPack(null);
+            try {
+                ModpackManifestList.ModpackManifestReference reference = this.launcher.getRemotePacks().getPackByName(pack).orElse(null);
+                if (reference != null) {
+                    this.ipcHandler.send("launch_pack", reference.getWebstart());
+                }
+            } catch (IOException e) {
+                IpcTopics.log.warn("Fehler beim Starten von Modpack", e);
+            }
+        }
     }
 
-    void onMcLogin(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
-        if (data.get("new_profile").getAsBoolean()) {
-            this.launcher.getConfig().addProfile(this.launcher.getConfig().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT));
-        } else {
-            this.launcher.getConfig().setProfile(0, this.launcher.getConfig().getAuthenticationService().createUserAuthentication(Agent.MINECRAFT));
-        }
-        this.launcher.getConfig().getSelectedProfile().setUsername(data.get("username").getAsString());
-        this.launcher.getConfig().getSelectedProfile().setPassword(data.get("password").getAsString());
+    void onStartMicrosoftLogin(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
         try {
-            this.launcher.login();
-
-            List<UserAuthentication> profiles = this.launcher.getConfig().getProfiles();
-            for (int i = 0; i < profiles.size(); i++) {
-                if (i > 0 && this.launcher.getConfig().getSelectedProfile().getUserID().equals(profiles.get(i).getUserID())) {
-                    this.launcher.getConfig().removeProfile(i);
-                    break;
-                }
-            }
-
-            this.ipcHandler.send("update_profiles", this.launcher.getConfig().getGameProfiles());
+            MicrosoftLogin.requestLogin();
             callback.success(new JsonObject());
-        } catch (Exception e) {
-            this.launcher.getConfig().removeProfile(0);
-            IpcTopics.log.warn("Fehler beim Login", e);
+        } catch (LoginException e) {
             callback.failure(e.getLocalizedMessage());
         }
     }
 
-    void onSwitchProfile(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
-        this.launcher.getConfig().setSelectedProfile(data.get("index").getAsInt());
-
-        if (!this.launcher.getConfig().getSelectedProfile().isLoggedIn() && !this.launcher.getConfig().getSelectedProfile().canLogIn()) {
-            JsonObject jsonObject = new JsonObject();
-            Map<String, Object> profileData = this.launcher.getConfig().getSelectedProfile().saveForStorage();
-            if (profileData.containsKey("username")) {
-                jsonObject.addProperty("username", (String) profileData.get("username"));
-                jsonObject.addProperty("new_profile", false);
-            }
-            this.ipcHandler.send("show_login_form", jsonObject);
+    void onMojangLogin(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        try {
+            this.launcher.getConfig().getLauncherProfileStore().commit(MojangLogin.login(data.get("username").getAsString(), data.get("password").getAsString()));
+            this.launcher.saveConfig();
+            callback.success(new JsonObject());
+        } catch (LoginException e) {
+            callback.failure(e.getLocalizedMessage());
         }
+    }
 
+    void onLogout(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        this.launcher.getConfig().getLauncherProfileStore().logoutSelected();
         this.launcher.saveConfig();
-        this.launcher.getIpcHandler().send("update_profiles", this.launcher.getConfig().getGameProfiles());
+        callback.success(new JsonObject());
+    }
+
+    void onSwitchProfile(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
+        UUID selected = UUID.fromString(data.get("uuid").getAsString());
+        this.launcher.getConfig().getLauncherProfileStore().getLauncherProfiles().stream()
+                .filter(profile -> profile.getUuid().equals(selected))
+                .findFirst()
+                .ifPresent(profile -> this.launcher.getConfig().getLauncherProfileStore().setSelectedProfile(profile));
+        this.launcher.saveConfig();
+        this.launcher.getConfig().getLauncherProfileStore().syncUiProfiles();
     }
 
     void onRequestSettings(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
@@ -305,8 +289,12 @@ public class IpcTopics {
                 callback.failure("Das Modpack konnte nicht gestartet werden");
                 IpcTopics.log.warn("Das Modpack " + modpack.get().getName() + " konnte nicht gestartet werden", e);
             }
+        } catch (LoginException e) {
+            callback.failure(e.getLocalizedMessage());
+            IpcTopics.log.warn("Fehler bei der Authentifizierung", e);
         } catch (IllegalStateException e) {
             callback.failure(e.getLocalizedMessage());
+            IpcTopics.log.warn("Fehler beim Modpack-Start", e);
         } catch (IOException | InterruptedException e) {
             callback.failure("Das Modpack konnte auf Grund eines Fehlers nicht gestartet werden");
             IpcTopics.log.warn("Das Modpack " + modpack.get().getName() + " konnte nicht gestartet werden", e);
@@ -417,19 +405,6 @@ public class IpcTopics {
                 callback.failure("Die Desktop-Verknüpfung konnte nicht angelegt werden");
                 IpcTopics.log.warn("Desktop-Verknüpfung konnte nicht angelegt werden", e);
             }
-        }
-    }
-
-    void onLogout(JsonObject data, TopicMessageHandler.JsonQueryCallback callback) {
-        this.launcher.getConfig().removeProfile(0);
-        this.launcher.saveConfig();
-        this.ipcHandler.send("update_profiles", this.launcher.getConfig().getGameProfiles());
-
-        if (this.launcher.getConfig().getGameProfiles().size() == 0) {
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("new_profile", true);
-
-            this.ipcHandler.send("show_login_form", jsonObject);
         }
     }
 

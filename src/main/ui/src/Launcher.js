@@ -35,14 +35,18 @@ class Launcher extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            loading: true, loginForm: false, loginFormPrefill: false, newProfile: true, loginDisabled: true, loginError: '',
-            profiles: false, dialog: false, dialogCloseable: false, loginListeners: [], modpackRunning: false,
+            loading: true, dialog: false, dialogCloseable: false, modpackRunning: false,
             featureMessage: false, featureCallback: false, installationStatus: false,
-            welcomeMessage: false
+            welcomeMessage: false,
+
+            profiles: false,
+            loginForm: false, selectedLoginProvider: false,
+            loginDisabled: true, loginError: '', loginListeners: [],
         };
         
         window.launcher = this;
 
+        this.startMicrosoftLogin = this.startMicrosoftLogin.bind(this);
         this.handleLoginInput = this.handleLoginInput.bind(this);
         this.handleLogin = this.handleLogin.bind(this);
         this.handlePasswordKeyDown = this.handlePasswordKeyDown.bind(this);
@@ -66,7 +70,17 @@ class Launcher extends React.Component {
         });
 
         this.listenIpc('show_login_form', (err, data) => {
-            this.showLoginForm(data.username, data.new_profile);
+            this.showLoginForm();
+        });
+
+        this.listenIpc('microsoft_login_error', (err, data) => {
+            this.setState({selectedLoginProvider: false, loginError: data.error});
+        });
+
+        this.listenIpc('close_microsoft_login', (err, data) => {
+            if (this.state.loginForm && this.state.selectedLoginProvider === 'microsoft') {
+                this.setState({selectedLoginProvider: false, loginForm: false, loginError: ''});
+            }
         });
 
         this.listenIpc('launch_pack', (err, data) => {
@@ -194,6 +208,16 @@ class Launcher extends React.Component {
 
     /* ============================================================ Login ============================================================ */
 
+    startMicrosoftLogin() {
+        this.sendIpc('start_microsoft_login', {}, (err, success) => {
+            if (err) {
+                return this.setState({loginError: err, loginError: ''});
+            }
+
+            this.setState({selectedLoginProvider: 'microsoft'});
+        });
+    }
+
     handleLoginInput(e) {
         let disabled = document.getElementById('username').value.trim().length == 0 || document.getElementById('password').value.trim().length == 0
         this.setState({loginDisabled: disabled});
@@ -201,7 +225,7 @@ class Launcher extends React.Component {
 
     handleLogin() {
         this.loading(true);
-        this.sendIpc('mc_login', {username: document.getElementById('username').value, password: document.getElementById('password').value, new_profile: this.state.newProfile}, err => {
+        this.sendIpc('on_mojang_login', {username: document.getElementById('username').value, password: document.getElementById('password').value}, err => {
             this.loading(false);
             if (err) {
                 this.setState({loginError: err});
@@ -222,8 +246,8 @@ class Launcher extends React.Component {
         this.setState({loginForm: false});
     }
 
-    switchProfile(index) {
-        this.sendIpc('switch_profile', {index: index});
+    switchProfile(uuid) {
+        this.sendIpc('switch_profile', {uuid: uuid});
     }
 
     logout() {
@@ -308,8 +332,8 @@ class Launcher extends React.Component {
         this.sendIpc('kill_minecraft', false);
     }
 
-    showLoginForm(loginFormPrefill, newProfile) {
-        this.setState({loginForm: true, loginFormPrefill: loginFormPrefill, newProfile: newProfile, loginError: ''})
+    showLoginForm() {
+        this.setState({loginForm: true, loginError: '', selectedLoginProvider: ''})
     }
 
     render() {
@@ -318,22 +342,56 @@ class Launcher extends React.Component {
                 {this.state.loginForm && (
                     <div className="overlayed-dark">
                         <div className="login-form dialog">
-                            <div className="form-group"><b>Bitte melde dich mit deinem Minecraft-Account an</b></div>
+                            <div className="form-group"><b>Bitte melde dich an</b></div>
                             {this.state.loginError && <div className="error-alert">{this.state.loginError}</div>}
-                            <div className="form-group">
-                                <p>Benutzername / Email</p>
-                                <input type="text" id="username" key={this.state.loginFormPrefill ? 'prefilled' : 'empty'} onInput={this.handleLoginInput} defaultValue={this.state.loginFormPrefill} spellCheck="false"></input>
-                            </div>
-                            <div className="form-group">
-                                <p>Passwort</p>
-                                <input type="password" id="password" onInput={this.handleLoginInput} onKeyDown={this.handlePasswordKeyDown}></input>
-                            </div>
-                            <div className="form-group">
-                                <button className="btn login-btn" onClick={this.handleLogin} disabled={this.state.loginDisabled}>Anmelden</button>
-                                {this.state.profiles.length > 0 && (
-                                    <button className="btn" onClick={this.handleCancelLogin}>Abbrechen</button>
-                                )}
-                            </div>
+                            
+                            {!this.state.selectedLoginProvider && (
+                                <div>
+                                    <div className="form-group">
+                                        <button className="btn centered" onClick={this.startMicrosoftLogin}>
+                                            &nbsp;Mit Microsoft-Account anmelden
+                                        </button>
+                                    </div>
+                                    <div className="form-group">
+                                        <button className="btn centered" onClick={() => this.setState({selectedLoginProvider: 'mojang', loginError: ''})}>
+                                            Mit Mojang-Account anmelden
+                                        </button>
+                                    </div>
+                                    <div className="form-group">
+                                        <button className="btn centered" onClick={() => this.setState({loginForm: false})}>
+                                            Abbrechen
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {this.state.selectedLoginProvider === 'microsoft' && (
+                                <div>
+                                    <p>Bitte schließe den Anmeldevorgang in deinem Browser ab</p>
+
+                                    <div className="form-group">
+                                        <button className="btn" onClick={() => this.setState({selectedLoginProvider: false})}>Zurück</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {this.state.selectedLoginProvider === 'mojang' && (
+                                <div>
+                                    <div className="form-group">
+                                        <p>Benutzername / Email</p>
+                                        <input type="text" id="username" spellCheck="false"></input>
+                                    </div>
+                                    <div className="form-group">
+                                        <p>Passwort</p>
+                                        <input type="password" id="password"></input>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <button className="btn login-btn" onClick={this.handleLogin}>Anmelden</button>
+                                        <button className="btn" onClick={() => this.setState({selectedLoginProvider: false})}>Zurück</button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

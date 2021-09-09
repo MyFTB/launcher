@@ -18,9 +18,9 @@
 
 package de.myftb.launcher;
 
-import org.apache.http.client.fluent.Request;
-
 import java.net.URI;
+
+import org.apache.http.client.fluent.Request;
 
 public class HttpRequest {
 

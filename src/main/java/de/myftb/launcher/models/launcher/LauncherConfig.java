@@ -22,10 +22,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
-import com.mojang.authlib.AuthenticationService;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.UserAuthentication;
-import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.sun.management.OperatingSystemMXBean;
 
 import de.myftb.launcher.launch.ManifestHelper;
@@ -36,21 +32,18 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
-import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class LauncherConfig {
 
     private final Gson gson = new GsonBuilder()
-            .registerTypeHierarchyAdapter(UserAuthentication.class, new UserAuthenticationSerializer(this))
             .excludeFieldsWithoutExposeAnnotation()
             .setPrettyPrinting()
             .create();
@@ -66,11 +59,11 @@ public class LauncherConfig {
 
     @Expose private String packKey = "";
     @Expose private String installationDir = "";
-    @Expose(serialize = false) private UserAuthentication profile = null;
-    @Expose private List<UserAuthentication> profiles = new LinkedList<>();
     @Expose private boolean allowWebstart = true;
     @Expose private List<String> lastPlayedPacks = new LinkedList<>();
     @Expose private Map<String, String> autoConfigs = new HashMap<>();
+
+    @Expose private LauncherProfileStore launcherProfileStore = new LauncherProfileStore();
 
     public String getClientToken() {
         return this.clientToken;
@@ -104,39 +97,6 @@ public class LauncherConfig {
         return this.installationDir;
     }
 
-    public UserAuthentication getProfile() {
-        return this.profile;
-    }
-
-    public UserAuthentication getSelectedProfile() {
-        return this.profiles.size() != 0 ? this.profiles.get(0) : null;
-    }
-
-    public void setSelectedProfile(int index) {
-        UserAuthentication profile = this.profiles.remove(index);
-        this.profiles.add(0, profile);
-    }
-
-    public void setProfile(int index, UserAuthentication profile) {
-        this.profiles.set(index, profile);
-    }
-
-    public void removeProfile(int index) {
-        this.profiles.remove(index);
-    }
-
-    public List<UserAuthentication> getProfiles() {
-        return this.profiles;
-    }
-
-    public List<GameProfile> getGameProfiles() {
-        return this.profiles.stream().map(UserAuthentication::getSelectedProfile).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    public void addProfile(UserAuthentication profile) {
-        this.profiles.add(0, profile);
-    }
-
     public boolean isAllowWebstart() {
         return this.allowWebstart;
     }
@@ -162,8 +122,8 @@ public class LauncherConfig {
         return this.autoConfigs;
     }
 
-    public AuthenticationService getAuthenticationService() {
-        return new YggdrasilAuthenticationService(Proxy.NO_PROXY, this.getClientToken());
+    public LauncherProfileStore getLauncherProfileStore() {
+        return this.launcherProfileStore;
     }
 
     /* ======================================== Serialisierung ======================================== */
@@ -188,9 +148,6 @@ public class LauncherConfig {
         }
 
         LauncherConfig config = this.gson.fromJson(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8), LauncherConfig.class);
-        if (config.getProfile() != null && config.getProfiles().size() == 0) {
-            config.addProfile(config.getProfile());
-        }
         return config;
     }
 

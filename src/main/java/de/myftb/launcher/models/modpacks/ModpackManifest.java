@@ -19,7 +19,6 @@
 package de.myftb.launcher.models.modpacks;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import com.google.common.io.Files;
 
 import de.myftb.launcher.HttpRequest;

@@ -1,6 +1,6 @@
 /*
  * MyFTBLauncher
- * Copyright (C) 2020 MyFTB <https://myftb.de>
+ * Copyright (C) 2021 MyFTB <https://myftb.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,27 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.myftb.launcher.logging;
+package de.myftb.launcher.login;
 
-import java.io.File;
+import de.myftb.launcher.models.launcher.LauncherProfile;
 
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
+public interface LoginService {
 
-public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
-    private static boolean rolled = false;
+    void refreshLogin(LauncherProfile launcherProfile) throws LoginException;
 
-    @Override
-    public boolean isTriggeringEvent(File activeFile, T event) {
-        if (!StartupRollTriggeringPolicy.rolled) {
-            StartupRollTriggeringPolicy.rolled = true;
-            if (activeFile.length() == 0) {
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
+    String getAuthToken(LauncherProfile launcherProfile);
 
 }

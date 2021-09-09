@@ -19,11 +19,11 @@
 package de.myftb.launcher.launch;
 
 import com.google.common.base.Joiner;
-import com.mojang.authlib.UserAuthentication;
 
 import de.myftb.launcher.Constants;
 import de.myftb.launcher.Launcher;
 import de.myftb.launcher.MavenHelper;
+import de.myftb.launcher.models.launcher.LauncherProfile;
 import de.myftb.launcher.models.launcher.Platform;
 import de.myftb.launcher.models.minecraft.Arguments;
 import de.myftb.launcher.models.minecraft.AssetIndex;
@@ -231,7 +231,7 @@ public class LaunchMinecraft {
         return success;
     }
 
-    public static void launch(ModpackManifest modpackManifest, UserAuthentication userAuthentication) throws IOException, InterruptedException {
+    public static void launch(ModpackManifest modpackManifest, LauncherProfile launcherProfile) throws IOException, InterruptedException {
         if (LaunchMinecraft.running) {
             throw new IllegalStateException("Es läuft bereits ein Modpack");
         }
@@ -330,12 +330,14 @@ public class LaunchMinecraft {
                 minecraftManifest.getId() + ".jar").getAbsolutePath());
 
         Map<String, String> tokens = new HashMap<>();
-        tokens.put("auth_player_name", userAuthentication.getSelectedProfile().getName());
-        tokens.put("auth_uuid", userAuthentication.getSelectedProfile().getId().toString());
-        tokens.put("auth_access_token", userAuthentication.getAuthenticatedToken());
-        tokens.put("auth_session", userAuthentication.getAuthenticatedToken());
-        tokens.put("user_type", userAuthentication.getUserType().getName());
-        tokens.put("user_properties", userAuthentication.getSelectedProfile().getProperties().toString());
+        String authToken = Launcher.getInstance().getConfig().getLauncherProfileStore().getLoginService(launcherProfile).getAuthToken(launcherProfile);
+        tokens.put("auth_player_name", launcherProfile.getLastKnownUsername());
+        tokens.put("auth_uuid", launcherProfile.getUuid().toString());
+        tokens.put("auth_access_token", authToken);
+        tokens.put("auth_session", authToken);
+        // tokens.put("user_type", userAuthentication.getUserType().getName());
+        tokens.put("user_properties", "{}");
+
 
         tokens.put("version_name", minecraftManifest.getId());
         tokens.put("game_directory", instanceDir.getAbsolutePath());
