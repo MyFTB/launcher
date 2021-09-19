@@ -15,31 +15,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.myftb.launcher;
 
-import java.net.URI;
+package de.myftb.launcher.login.microsoft.models;
 
-import org.apache.http.client.fluent.Request;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class HttpRequest {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MinecraftAuthentication {
+    private String username;
+    @JsonProperty("access_token")
+    private String accessToken;
+    @JsonProperty("token_type")
+    private String tokenType;
+    @JsonProperty("expires_in")
+    private int expiresIn;
 
-    private static Request configure(Request request) {
-        return request
-                .connectTimeout(Constants.connectTimeout)
-                .socketTimeout(Constants.socketTimeout)
-                .addHeader("User-Agent", "MyFTBLauncher v" + Launcher.getVersion());
+    public String getUsername() {
+        return this.username;
     }
 
-    public static Request get(String url) {
-        return HttpRequest.configure(Request.Get(url));
+    public String getAccessToken() {
+        return this.accessToken;
     }
 
-    public static Request get(URI url) {
-        return HttpRequest.configure(Request.Get(url));
+    public String getTokenType() {
+        return this.tokenType;
     }
 
-    public static Request post(String url) {
-        return HttpRequest.configure(Request.Post(url));
+    public int getExpiresIn() {
+        return this.expiresIn;
     }
-
 }

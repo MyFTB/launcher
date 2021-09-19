@@ -28,6 +28,8 @@ public class Constants {
     public static final String pasteTarget = "https://paste.myftb.de";
     public static final String postsApi = "https://myftb.de/api/posts";
 
+    public static final String microsoftLoginClientId = "e9b5325d-45dd-4f9b-b989-a4e23fa2e62b";
+
     public static final int connectTimeout = 30000;
     public static final int socketTimeout = 90000;
 

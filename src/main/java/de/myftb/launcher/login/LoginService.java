@@ -15,31 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.myftb.launcher;
 
-import java.net.URI;
+package de.myftb.launcher.login;
 
-import org.apache.http.client.fluent.Request;
+import de.myftb.launcher.models.launcher.LauncherProfile;
 
-public class HttpRequest {
+public interface LoginService {
 
-    private static Request configure(Request request) {
-        return request
-                .connectTimeout(Constants.connectTimeout)
-                .socketTimeout(Constants.socketTimeout)
-                .addHeader("User-Agent", "MyFTBLauncher v" + Launcher.getVersion());
-    }
+    void refreshLogin(LauncherProfile launcherProfile) throws LoginException;
 
-    public static Request get(String url) {
-        return HttpRequest.configure(Request.Get(url));
-    }
-
-    public static Request get(URI url) {
-        return HttpRequest.configure(Request.Get(url));
-    }
-
-    public static Request post(String url) {
-        return HttpRequest.configure(Request.Post(url));
-    }
+    String getAuthToken(LauncherProfile launcherProfile);
 
 }

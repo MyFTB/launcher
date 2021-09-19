@@ -275,3 +275,9 @@ $sidebarWidth: $iconSize + 180px;
         right: 0;
     }
 }
+
+.centered {
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+}

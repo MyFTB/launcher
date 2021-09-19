@@ -18,6 +18,8 @@
 package de.myftb.launcher.launch;
 
 import de.myftb.launcher.Constants;
+import de.myftb.launcher.HttpRequest;
+import de.myftb.launcher.MavenHelper;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,8 +27,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-import de.myftb.launcher.HttpRequest;
-import de.myftb.launcher.MavenHelper;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.util.EntityUtils;

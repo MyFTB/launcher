@@ -17,9 +17,9 @@
  */
 package de.myftb.launcher.logging;
 
-import ch.qos.logback.core.rolling.TriggeringPolicyBase;
-
 import java.io.File;
+
+import ch.qos.logback.core.rolling.TriggeringPolicyBase;
 
 public class StartupRollTriggeringPolicy<T> extends TriggeringPolicyBase<T> {
     private static boolean rolled = false;

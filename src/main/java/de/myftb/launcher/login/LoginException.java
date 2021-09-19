@@ -15,31 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.myftb.launcher;
 
-import java.net.URI;
+package de.myftb.launcher.login;
 
-import org.apache.http.client.fluent.Request;
+public class LoginException extends Exception {
 
-public class HttpRequest {
-
-    private static Request configure(Request request) {
-        return request
-                .connectTimeout(Constants.connectTimeout)
-                .socketTimeout(Constants.socketTimeout)
-                .addHeader("User-Agent", "MyFTBLauncher v" + Launcher.getVersion());
+    public LoginException(String message) {
+        super(message);
     }
 
-    public static Request get(String url) {
-        return HttpRequest.configure(Request.Get(url));
-    }
-
-    public static Request get(URI url) {
-        return HttpRequest.configure(Request.Get(url));
-    }
-
-    public static Request post(String url) {
-        return HttpRequest.configure(Request.Post(url));
+    public LoginException(String message, Throwable cause) {
+        super(message, cause);
     }
 
 }

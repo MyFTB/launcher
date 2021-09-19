@@ -15,31 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.myftb.launcher;
 
-import java.net.URI;
+package de.myftb.launcher.login.microsoft.models;
 
-import org.apache.http.client.fluent.Request;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-public class HttpRequest {
+import java.util.UUID;
 
-    private static Request configure(Request request) {
-        return request
-                .connectTimeout(Constants.connectTimeout)
-                .socketTimeout(Constants.socketTimeout)
-                .addHeader("User-Agent", "MyFTBLauncher v" + Launcher.getVersion());
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MinecraftProfile {
+    private String id;
+    private String name;
+
+    public String getId() {
+        return this.id;
     }
 
-    public static Request get(String url) {
-        return HttpRequest.configure(Request.Get(url));
+    public String getName() {
+        return this.name;
     }
 
-    public static Request get(URI url) {
-        return HttpRequest.configure(Request.Get(url));
+    public UUID getUuid() {
+        return UUID.fromString(this.id.substring(0, 8) + "-" + this.id.substring(8, 12) + "-" + this.id.substring(12, 16) + "-"
+                + this.id.substring(16, 20) + "-" + this.id.substring(20, 32));
     }
-
-    public static Request post(String url) {
-        return HttpRequest.configure(Request.Post(url));
-    }
-
 }

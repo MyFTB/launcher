@@ -20,6 +20,7 @@ package de.myftb.launcher.models.modpacks;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonObject;
+
 import de.myftb.launcher.launch.LaunchHelper;
 import de.myftb.launcher.launch.ManifestHelper;
 

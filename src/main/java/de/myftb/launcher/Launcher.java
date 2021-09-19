@@ -18,7 +18,6 @@
 package de.myftb.launcher;
 
 import com.google.gson.JsonObject;
-import com.mojang.authlib.exceptions.AuthenticationException;
 
 import de.myftb.launcher.autoconfig.AutoConfigManager;
 import de.myftb.launcher.cef.LauncherContextMenuHandler;
@@ -29,7 +28,9 @@ import de.myftb.launcher.integration.DiscordIntegration;
 import de.myftb.launcher.integration.ModpackWebstart;
 import de.myftb.launcher.launch.LaunchMinecraft;
 import de.myftb.launcher.launch.ManifestHelper;
+import de.myftb.launcher.login.LoginException;
 import de.myftb.launcher.models.launcher.LauncherConfig;
+import de.myftb.launcher.models.launcher.LauncherProfile;
 import de.myftb.launcher.models.launcher.Platform;
 import de.myftb.launcher.models.modpacks.ModpackManifest;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
@@ -41,7 +42,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Map;
+import java.util.Collections;
+import java.util.Optional;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -87,8 +89,7 @@ public class Launcher {
 
         this.firstStart = !new File(this.getExecutableDirectory(), "config.json").exists();
         this.config = new LauncherConfig();
-        this.config = this.config.readConfig(this.getExecutableDirectory()); // Workaround damit Profile korrekt gelesen werden.
-        this.config = this.config.readConfig(this.getExecutableDirectory()); // Zukünftig vielleicht einen Custom (De)Serializer?
+        this.config = this.config.readConfig(this.getExecutableDirectory());
         this.saveConfig();
 
         this.cefApp = CefFrame.getApp();
@@ -117,7 +118,7 @@ public class Launcher {
         this.setupIpcCommunication();
     }
 
-    private void init() throws Exception {
+    private void init() {
         this.cefBrowser = this.cefClient.createBrowser(Launcher.development ? "http://127.0.0.1:8080" : "http://launcher.myftb.local/", false, false);
 
         this.window = new CefFrame(this.cefBrowser);
@@ -147,9 +148,12 @@ public class Launcher {
     }
 
     private void setupIpcCommunication() {
-        this.ipcHandler.listenAsync("renderer_arrived", this.ipcTopics::onRendererArrived);
-        this.ipcHandler.listenAsync("mc_login", this.ipcTopics::onMcLogin);
         this.ipcHandler.listenAsync("switch_profile", this.ipcTopics::onSwitchProfile);
+        this.ipcHandler.listenAsync("start_microsoft_login", this.ipcTopics::onStartMicrosoftLogin);
+        this.ipcHandler.listenAsync("on_mojang_login", this.ipcTopics::onMojangLogin);
+        this.ipcHandler.listenAsync("logout", this.ipcTopics::onLogout);
+
+        this.ipcHandler.listenAsync("renderer_arrived", this.ipcTopics::onRendererArrived);
         this.ipcHandler.listen("request_settings", this.ipcTopics::onRequestSettings);
         this.ipcHandler.listen("submit_settings", this.ipcTopics::onSubmitSettings);
         this.ipcHandler.listenAsync("open_url", this.ipcTopics::onOpenUrl);
@@ -160,7 +164,7 @@ public class Launcher {
         this.ipcHandler.listenAsync("install_modpack", this.ipcTopics::onInstallModpack);
         this.ipcHandler.listenAsync("launch_modpack", this.ipcTopics::onLaunchModpack);
         this.ipcHandler.listenAsync("modpack_menu_click", this.ipcTopics::onModpackContextMenuClick);
-        this.ipcHandler.listenAsync("logout", this.ipcTopics::onLogout);
+
         this.ipcHandler.listenAsync("request_posts", this.ipcTopics::onRequestPosts);
         this.ipcHandler.listenAsync("request_console", this.ipcTopics::onRequestConsole);
         this.ipcHandler.listenAsync("upload_log", this.ipcTopics::onUploadLog);
@@ -170,41 +174,9 @@ public class Launcher {
     }
 
     /**
-     * Meldet das in der Konfiguration angegebene Minecraft-Profil an.
-     * Eine UI-Benachrichtigung über das Topic "logged_in" wird ebenfalls versendet
-     *
-     * @throws AuthenticationException Fehler bei der Anmeldung
-     */
-    void login() throws AuthenticationException {
-        this.config.getSelectedProfile().logIn();
-        this.saveConfig();
-        Launcher.log.info("Minecraft Account angemeldet: " + this.config.getGameProfiles());
-
-        if (this.firstStart) {
-            this.firstStart = false;
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("installation_dir", this.getSaveDirectory().getAbsolutePath());
-            this.ipcHandler.send("welcome_message", jsonObject);
-        }
-
-        if (this.launchPack != null) {
-            String pack = this.launchPack;
-            this.launchPack = null;
-            try {
-                ModpackManifestList.ModpackManifestReference reference = this.getRemotePacks().getPackByName(pack).orElse(null);
-                if (reference != null) {
-                    this.ipcHandler.send("launch_pack", reference.getWebstart());
-                }
-            } catch (IOException e) {
-                Launcher.log.warn("Fehler beim Starten von Modpack", e);
-            }
-        }
-    }
-
-    /**
      * Speichert die aktuelle Konfiguration in die zugehörige Datei.
      */
-    void saveConfig() {
+    public void saveConfig() {
         try {
             this.config.save(this.getExecutableDirectory());
         } catch (IOException e) {
@@ -294,38 +266,21 @@ public class Launcher {
         return subDir;
     }
 
-    public void launchModpack(ModpackManifest manifest, Runnable launchingCallback) throws IOException, InterruptedException {
-        if (this.config.getSelectedProfile() == null) {
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("new_profile", this.config.getGameProfiles().size() == 0);
-            this.ipcHandler.send("show_login_form", jsonObject);
-            return;
-        }
-
-        boolean loggedIn = false;
-        if (this.config.getSelectedProfile().isLoggedIn() || this.config.getSelectedProfile().canLogIn()) {
-            try {
-                this.login();
-                loggedIn = true;
-            } catch (AuthenticationException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (!loggedIn) {
-            JsonObject jsonObject = new JsonObject();
-            Map<String, Object> profileData = this.config.getSelectedProfile().saveForStorage();
-            if (profileData.containsKey("username")) {
-                jsonObject.addProperty("username", (String) profileData.get("username"));
-            }
-            this.ipcHandler.send("show_login_form", jsonObject);
+    public void launchModpack(ModpackManifest manifest, Runnable launchingCallback) throws IOException, InterruptedException, LoginException {
+        Optional<LauncherProfile> selectedProfile = this.config.getLauncherProfileStore().getSelectedProfile();
+        if (selectedProfile.isPresent()) {
+            this.config.getLauncherProfileStore().getLoginService(selectedProfile.get()).refreshLogin(selectedProfile.get());
+            this.config.getLauncherProfileStore().commit(Collections.singleton(selectedProfile.get()));
+            this.saveConfig();
+        } else {
+            this.ipcHandler.send("show_login_form", new JsonObject());
             return;
         }
 
         launchingCallback.run();
         this.config.addLastPlayedPack(manifest.getName());
         this.saveConfig();
-        LaunchMinecraft.launch(manifest, this.config.getSelectedProfile());
+        LaunchMinecraft.launch(manifest, selectedProfile.get());
     }
 
     public LauncherConfig getConfig() {
@@ -367,6 +322,22 @@ public class Launcher {
             this.window.repaint();
             this.window.setAlwaysOnTop(false);
         });
+    }
+
+    public boolean isFirstStart() {
+        return this.firstStart;
+    }
+
+    public void setFirstStart(boolean firstStart) {
+        this.firstStart = firstStart;
+    }
+
+    public String getLaunchPack() {
+        return this.launchPack;
+    }
+
+    public void setLaunchPack(String launchPack) {
+        this.launchPack = launchPack;
     }
 
     public TopicMessageHandler getIpcHandler() {
