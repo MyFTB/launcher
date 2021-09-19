@@ -1,6 +1,6 @@
 /*
  * MyFTBLauncher
- * Copyright (C) 2020 MyFTB <https://myftb.de>
+ * Copyright (C) 2021 MyFTB <https://myftb.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package de.myftb.launcher.launch;
 
 import de.myftb.launcher.Launcher;
@@ -49,10 +48,10 @@ public class ForgeInstallWrapper extends MavenDownloadCallable {
 
         Class<?> classUtil = installerClassLoader.loadClass("net.minecraftforge.installer.json.Util");
         Method loadInstallProfile = classUtil.getDeclaredMethod("loadInstallProfile");
-        Object installProfile = loadInstallProfile.invoke(null);;
+        Object installProfile = loadInstallProfile.invoke(null);
 
         Class<?> classClientInstall = installerClassLoader.loadClass("net.minecraftforge.installer.actions.ClientInstall");
-        Class<?> classInstall = installerClassLoader.loadClass("net.minecraftforge.installer.json.Install");
+        Class<?> classInstall = installProfile.getClass();
         Class<?> classProgressCallback = installerClassLoader.loadClass("net.minecraftforge.installer.actions.ProgressCallback");
         Constructor<?> clientInstallConstructor = classClientInstall.getDeclaredConstructor(classInstall, classProgressCallback);
 
@@ -60,13 +59,21 @@ public class ForgeInstallWrapper extends MavenDownloadCallable {
 
         Object clientInstall = clientInstallConstructor.newInstance(installProfile, toStdOut.get(null));
 
-        Method runMethod = classClientInstall.getDeclaredMethod("run", File.class, Predicate.class);
         Predicate<String> optionals = str -> true;
         File targetDir = Launcher.getInstance().getSaveDirectory();
-
         Files.write(new File(targetDir, "launcher_profiles.json").toPath(), "{}".getBytes());
 
-        boolean success = (boolean) runMethod.invoke(clientInstall, targetDir, optionals);
+        Method runMethod;
+        boolean success;
+
+        try {
+            runMethod = classClientInstall.getDeclaredMethod("run", File.class, Predicate.class);
+            success = (boolean) runMethod.invoke(clientInstall, targetDir, optionals);
+        } catch (NoSuchMethodException e) {
+            runMethod = classClientInstall.getDeclaredMethod("run", File.class, Predicate.class, File.class);
+            success = (boolean) runMethod.invoke(clientInstall, targetDir, optionals, installerFile);
+        }
+
         if (!success) {
             throw new IllegalStateException("Die Forge-Installation konnte nicht erfolgreich abgeschlossen werden");
         }
