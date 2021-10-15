@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import de.myftb.launcher.Constants;
 import de.myftb.launcher.Launcher;
 import de.myftb.launcher.MavenHelper;
+import de.myftb.launcher.models.launcher.Index;
 import de.myftb.launcher.models.launcher.LauncherProfile;
 import de.myftb.launcher.models.launcher.Platform;
 import de.myftb.launcher.models.minecraft.Arguments;
@@ -47,6 +48,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -177,6 +179,24 @@ public class LaunchMinecraft {
                                 : "assets/objects"),
                                 assetIndex.isVirtual() ? entry.getKey() : entry.getValue().getSubPath()))))
                 .collect(Collectors.toList()));
+
+        // Custom Runtime
+        if (modpackManifest.getRuntime() != null) {
+            String architecture = System.getProperty("sun.arch.data.model").equals("64") ? "-x64": "";
+            String os = Platform.getPlatform().name().toLowerCase(Locale.ROOT);
+            String runtimeIndexName = String.format("%s-%s%s", modpackManifest.getRuntime(), os, architecture);
+
+            Index runtimeFileIndex = LaunchHelper.mapper.readValue(LaunchHelper.download(
+                    String.format(Constants.runtimeIndex, runtimeIndexName)), Index.class);
+
+            File runtimeDir = new File(new File(Launcher.getInstance().getExecutableDirectory(), "custom-runtimes"), modpackManifest.getRuntime());
+            runtimeDir.mkdirs();
+
+            tasks.addAll(runtimeFileIndex.getObjects().stream()
+                    .map(object -> new DownloadCallable(new DownloadCallable.Downloadable(object.getUrl(),
+                            LaunchHelper::getSha256, object.getHash(), new File(runtimeDir, object.getPath()))))
+                    .collect(Collectors.toList()));
+        }
 
         // Modpack Installation Tasks
         if (modpackManifest.getTasks() != null) {
@@ -357,6 +377,10 @@ public class LaunchMinecraft {
 
         List<String> arguments = new LinkedList<>();
         File runtimeDir = new File(System.getProperty("java.home"));
+        if (modpackManifest.getRuntime() != null) {
+            runtimeDir = new File(new File(Launcher.getInstance().getExecutableDirectory(), "custom-runtimes"), modpackManifest.getRuntime());
+        }
+
         arguments.add(new File(runtimeDir, "bin/java" + (Platform.getPlatform() == Platform.WINDOWS ? ".exe" : "")).getAbsolutePath());
         arguments.addAll(jvmArguments);
         arguments.add(modpackManifest.getVersionManifest().getMainClass());

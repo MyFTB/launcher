@@ -15,28 +15,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.myftb.launcher.launch;
 
-import java.io.File;
-import java.nio.file.Files;
+package de.myftb.launcher.models.launcher;
 
-public class CopyDownloadCallable extends DownloadCallable {
-    private final File copy;
+import java.util.List;
 
-    public CopyDownloadCallable(Downloadable downloadable, File copy) {
-        super(downloadable);
-        this.copy = copy;
+public class Index {
+    private String name;
+    private List<IndexObject> objects;
+
+    public String getName() {
+        return this.name;
     }
 
-    @Override
-    public File call() throws Exception {
-        File targetFile = super.call();
+    public List<IndexObject> getObjects() {
+        return this.objects;
+    }
 
-        Files.copy(targetFile.toPath(), this.copy.toPath());
-        Files.write(new File(this.copy.getAbsolutePath() + ".sha1").toPath(),
-                this.downloadable.sha1.getBytes());
+    public static class IndexObject {
+        private String path;
+        private String hash;
+        private String url;
 
-        return targetFile;
+        public String getPath() {
+            return this.path;
+        }
+
+        public String getHash() {
+            return this.hash;
+        }
+
+        public String getUrl() {
+            return this.url;
+        }
+
     }
 
 }

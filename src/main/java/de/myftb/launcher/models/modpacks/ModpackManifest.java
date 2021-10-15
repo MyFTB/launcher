@@ -42,6 +42,7 @@ public class ModpackManifest {
     private String gameVersion;
     private MinecraftVersionManifest versionManifest; // TODO inheritsFrom korrekt beachten
     private Map<String, List<String>> launch;
+    private String runtime;
 
     private List<Feature> features;
     private List<FileTask> tasks;
@@ -68,6 +69,10 @@ public class ModpackManifest {
 
     public Map<String, List<String>> getLaunch() {
         return this.launch;
+    }
+
+    public String getRuntime() {
+        return this.runtime;
     }
 
     public List<Feature> getFeatures() {

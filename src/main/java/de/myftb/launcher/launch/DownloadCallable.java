@@ -43,7 +43,7 @@ public class DownloadCallable implements Callable<File> {
     @Override
     public File call() throws Exception {
         if (this.downloadable.targetFile.isFile()
-                && (this.onlyCheckExistance || LaunchHelper.getSha1(this.downloadable.targetFile).equals(this.downloadable.sha1))) {
+                && (this.onlyCheckExistance || this.downloadable.hashFn.getFileHash(this.downloadable.targetFile).equals(this.downloadable.hash))) {
             DownloadCallable.log.trace("Überspringe Download von " + this.downloadable.url + ", Datei ist bereits aktuell");
             return this.downloadable.targetFile;
         }
@@ -56,10 +56,10 @@ public class DownloadCallable implements Callable<File> {
                 .execute()
                 .saveContent(this.downloadable.targetFile);
 
-        String sha1Sum = LaunchHelper.getSha1(this.downloadable.targetFile);
-        if (!this.onlyCheckExistance && !sha1Sum.equals(this.downloadable.sha1)) {
-            throw new IOException("Ungültige Prüfsumme beim Download von " + this.downloadable.url + ": " + sha1Sum + " erwartet: "
-                    + this.downloadable.sha1);
+        String hash = this.downloadable.hashFn.getFileHash(this.downloadable.targetFile);
+        if (!this.onlyCheckExistance && !hash.equals(this.downloadable.hash)) {
+            throw new IOException("Ungültige Prüfsumme beim Download von " + this.downloadable.url + ": " + hash + " erwartet: "
+                    + this.downloadable.hash);
         }
 
         DownloadCallable.log.info("Datei " + this.downloadable.url + " nach " + this.downloadable.targetFile.getAbsolutePath() + " heruntergeladen");
@@ -69,14 +69,21 @@ public class DownloadCallable implements Callable<File> {
 
     public static class Downloadable {
         protected final String url;
-        protected final String sha1;
+        protected final LaunchHelper.FileHashFunction hashFn;
+        protected final String hash;
         protected final File targetFile;
 
-        public Downloadable(String url, String sha1, File targetFile) {
+        public Downloadable(String url, LaunchHelper.FileHashFunction hashFn, String hash, File targetFile) {
             this.url = url;
-            this.sha1 = sha1;
+            this.hashFn = hashFn;
+            this.hash = hash;
             this.targetFile = targetFile;
         }
+
+        public Downloadable(String url, String hash, File targetFile) {
+            this(url, LaunchHelper::getSha1, hash, targetFile);
+        }
+
     }
 
 }

@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.http.HttpResponse;
@@ -54,9 +55,14 @@ public class LaunchHelper {
                     .addDeserializer(Arguments.class, new Arguments.ArgumentsDeserializer())
                     .addSerializer(Arguments.Argument.class, new Arguments.ArgumentSerializer()));
 
-    public static String getSha1(File file) throws IOException {
+    @FunctionalInterface
+    public interface FileHashFunction {
+        String getFileHash(File file) throws IOException;
+    }
+
+    public static String getFileHash(File file, String hashFunction) throws IOException {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            MessageDigest digest = MessageDigest.getInstance(hashFunction);
 
             byte[] buffer = new byte[8192];
             int count;
@@ -72,14 +78,30 @@ public class LaunchHelper {
         }
     }
 
-    public static String getSha1(String string) {
+    public static String getStringHash(String value, String hashFunction) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            digest.update(string.getBytes(StandardCharsets.UTF_8));
+            MessageDigest digest = MessageDigest.getInstance(hashFunction);
+            digest.update(value.getBytes(StandardCharsets.UTF_8));
             return Hex.encodeHexString(digest.digest());
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String getSha1(File file) throws IOException {
+        return LaunchHelper.getFileHash(file, "SHA-1");
+    }
+
+    public static String getSha1(String string) {
+        return LaunchHelper.getStringHash(string, "SHA-1");
+    }
+
+    public static String getSha256(File file) throws IOException {
+        return LaunchHelper.getFileHash(file, "SHA-256");
+    }
+
+    public static String getSha256(String string) {
+        return LaunchHelper.getStringHash(string, "SHA-256");
     }
 
     public static void replaceTokens(List<String> list, Map<String, String> tokens) {
@@ -92,7 +114,7 @@ public class LaunchHelper {
         }
     }
 
-    public static String download(String url, String sha1Sum) throws IOException {
+    public static String download(String url, Function<String, String> hashFn, String correctHash) throws IOException {
         HttpResponse response = HttpRequest.get(url)
                 .execute()
                 .returnResponse();
@@ -102,12 +124,22 @@ public class LaunchHelper {
         }
 
         String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-        String bodySum = LaunchHelper.getSha1(body);
-        if (sha1Sum != null && !bodySum.equals(sha1Sum)) {
-            throw new IOException("Ungültige Prüfsumme beim Download von " + url + ": " + bodySum + " erwartet: " + sha1Sum);
+        if (hashFn != null) {
+            String bodyHash = hashFn.apply(body);
+            if (correctHash != null && !bodyHash.equals(correctHash)) {
+                throw new IOException("Ungültige Prüfsumme beim Download von " + url + ": " + bodyHash + " erwartet: " + correctHash);
+            }
         }
 
         return body;
+    }
+
+    public static String download(String url, String correctHash) throws IOException {
+        return LaunchHelper.download(url, LaunchHelper::getSha1, correctHash);
+    }
+
+    public static String download(String url) throws IOException {
+        return LaunchHelper.download(url, null, null);
     }
 
     public static ExecutorService getNewDaemonThreadPool() {
