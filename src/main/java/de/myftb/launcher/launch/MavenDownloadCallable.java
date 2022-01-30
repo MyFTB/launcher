@@ -1,6 +1,6 @@
 /*
  * MyFTBLauncher
- * Copyright (C) 2021 MyFTB <https://myftb.de>
+ * Copyright (C) 2022 MyFTB <https://myftb.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpResponseException;
@@ -56,7 +55,8 @@ public class MavenDownloadCallable extends DownloadCallable {
                 return this.tryRepository(this.repoUrl, path);
             } catch (IOException e) {
                 if (!(e instanceof HttpResponseException) || ((HttpResponseException) e).getStatusCode() != 404) {
-                    MavenDownloadCallable.log.warn("Fehler beim Herunterladen von Maven-Artefakt: " + this.downloadable.url, e);
+                    MavenDownloadCallable.log.warn(String.format("Fehler beim Herunterladen von Maven-Artefakt %s von %s",
+                            this.downloadable.url, this.repoUrl), e);
                 }
             }
         }
@@ -66,7 +66,8 @@ public class MavenDownloadCallable extends DownloadCallable {
                 return this.tryRepository(repository, path);
             } catch (IOException e) {
                 if (!(e instanceof HttpResponseException) || ((HttpResponseException) e).getStatusCode() != 404) {
-                    MavenDownloadCallable.log.warn("Fehler beim Herunterladen von Maven-Artefakt: " + this.downloadable.url, e);
+                    MavenDownloadCallable.log.warn(String.format("Fehler beim Herunterladen von Maven-Artefakt %s von %s",
+                            this.downloadable.url, repository), e);
                 }
             }
         }
@@ -79,15 +80,20 @@ public class MavenDownloadCallable extends DownloadCallable {
                 .execute()
                 .returnResponse();
 
-        if (sha1SumResponse.getStatusLine().getStatusCode() != 200) {
-            throw new HttpResponseException(sha1SumResponse.getStatusLine().getStatusCode(), sha1SumResponse.getStatusLine().getReasonPhrase());
+        String sha1Sum = null;
+
+        if (sha1SumResponse.getStatusLine().getStatusCode() == 200) {
+            sha1Sum = EntityUtils.toString(sha1SumResponse.getEntity(), StandardCharsets.UTF_8).trim();
         }
 
-        String sha1Sum = EntityUtils.toString(sha1SumResponse.getEntity(), StandardCharsets.UTF_8).trim();
-
-        if (this.downloadable.targetFile.isFile() && LaunchHelper.getSha1(this.downloadable.targetFile).equals(sha1Sum)) {
-            MavenDownloadCallable.log.trace("Überspringe Download von " + this.downloadable.url + ", Datei ist bereits aktuell");
-            return this.downloadable.targetFile;
+        if (this.downloadable.targetFile.isFile()) {
+            if (sha1Sum == null) {
+                MavenDownloadCallable.log.trace("Überspringe Download von " + this.downloadable.url + ", es steht keine Prüfsumme zur Verfügung und die Datei existiert bereits");
+                return this.downloadable.targetFile;
+            } else if (LaunchHelper.getSha1(this.downloadable.targetFile).equals(sha1Sum)) {
+                MavenDownloadCallable.log.trace("Überspringe Download von " + this.downloadable.url + ", Datei ist bereits aktuell");
+                return this.downloadable.targetFile;
+            }
         }
 
         MavenDownloadCallable.log.trace("Lade Maven-Artifact " + this.downloadable.url + " herunter");
@@ -99,11 +105,10 @@ public class MavenDownloadCallable extends DownloadCallable {
                 .saveContent(this.downloadable.targetFile);
 
         String fileSum = LaunchHelper.getSha1(this.downloadable.targetFile);
-        if (!sha1Sum.equals(fileSum)) {
+        if (sha1Sum != null && !sha1Sum.equals(fileSum)) {
             throw new IOException("Ungültige Prüfsumme beim Download von " + this.downloadable.url + ": " + fileSum + " erwartet: " + sha1Sum);
         }
 
-        Files.write(new File(this.downloadable.targetFile.getAbsolutePath() + ".sha1").toPath(), sha1Sum.getBytes());
         MavenDownloadCallable.log.info("Datei " + this.downloadable.url + " nach " + this.downloadable.targetFile.getAbsolutePath()
                 + " heruntergeladen");
 

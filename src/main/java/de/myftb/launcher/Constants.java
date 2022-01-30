@@ -1,6 +1,6 @@
 /*
  * MyFTBLauncher
- * Copyright (C) 2021 MyFTB <https://myftb.de>
+ * Copyright (C) 2022 MyFTB <https://myftb.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,6 @@ public class Constants {
             "https://repo1.maven.org/maven2/",
             "http://maven.apache.org/",
             "http://files.minecraftforge.net/maven/",
-            "https://libraries.minecraft.net/",
-            "http://packs.myftb.de/packs/libraries/"
+            "https://libraries.minecraft.net/"
     };
 }
