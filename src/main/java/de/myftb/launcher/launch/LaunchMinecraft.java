@@ -153,10 +153,10 @@ public class LaunchMinecraft {
                 .flatMap(libary -> libary.getLibraryDownloads().stream())
                 .collect(Collectors.toList()));
 
-        Optional<Library> neededForgeInstaller = libraries.stream()
-                .filter(library -> library.getArtifactGroup().equals("net.minecraftforge") && library.getArtifactName().equals("forge")
-                        && library.getDownloads() != null && library.getDownloads().getArtifact() != null && library.getDownloads().getArtifact().getUrl().isEmpty())
-                .findFirst();
+        int majorGameVersion = Integer.parseInt(modpackManifest.getGameVersion().split("[.]")[1]);
+        Optional<Library> neededForgeInstaller = majorGameVersion > 12 ? libraries.stream()
+                .filter(library -> library.getArtifactGroup().equals("net.minecraftforge") && library.getArtifactName().equals("forge"))
+                .findFirst() : Optional.empty();
 
         if (neededForgeInstaller.isPresent()) {
             MavenHelper.MavenArtifact forgeArtifact = new MavenHelper.MavenArtifact(neededForgeInstaller.get().getName());
