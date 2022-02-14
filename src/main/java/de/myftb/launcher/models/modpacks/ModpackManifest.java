@@ -43,6 +43,7 @@ public class ModpackManifest {
     private MinecraftVersionManifest versionManifest; // TODO inheritsFrom korrekt beachten
     private Map<String, List<String>> launch;
     private String runtime;
+    private String logo;
 
     private List<Feature> features;
     private List<FileTask> tasks;
@@ -75,6 +76,10 @@ public class ModpackManifest {
         return this.runtime;
     }
 
+    public String getLogo() {
+        return this.logo;
+    }
+
     public List<Feature> getFeatures() {
         return this.features;
     }
@@ -90,9 +95,16 @@ public class ModpackManifest {
     }
 
     public boolean saveModpackLogo(File target) throws IOException {
-        Optional<String> imageLocation = Launcher.getInstance().getRemotePacks().getPackByName(this.name)
-                .map(ModpackManifestList.ModpackManifestReference::getLocation)
-                .map(location -> location.substring(0, location.lastIndexOf('.')) + ".png");
+        Optional<String> imageLocation;
+
+        if (this.getLogo() != null) {
+            imageLocation = Optional.of(this.getLogo());
+        } else {
+            imageLocation = Launcher.getInstance().getRemotePacks().getPackByName(this.name)
+                    .map(ModpackManifestList.ModpackManifestReference::getLocation)
+                    .map(location -> location.substring(0, location.lastIndexOf('.')) + ".png")
+                    .map(location -> "https://launcher.myftb.de/images/" + location);
+        }
 
         if (!imageLocation.isPresent()) {
             return false;
@@ -106,7 +118,7 @@ public class ModpackManifest {
                 target = new File(target.getParentFile(), Files.getNameWithoutExtension(target.getName()) + ".png");
             }
 
-            HttpRequest.get("https://launcher.myftb.de/images/" + imageLocation.get())
+            HttpRequest.get(imageLocation.get())
                     .execute()
                     .saveContent(target);
 

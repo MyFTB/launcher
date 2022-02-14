@@ -17,16 +17,16 @@
  */
 package de.myftb.launcher.cef.schemes;
 
-import de.myftb.launcher.HttpRequest;
 import de.myftb.launcher.Launcher;
 import de.myftb.launcher.cef.DataResourceHandler;
+import de.myftb.launcher.launch.ManifestHelper;
+import de.myftb.launcher.models.modpacks.ModpackManifest;
 import de.myftb.launcher.models.modpacks.ModpackManifestList;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.apache.http.client.HttpResponseException;
@@ -41,21 +41,19 @@ public class ModpackImageScheme extends DataResourceHandler {
         mimeTypeSetter.accept("image/png");
 
         try {
-            Optional<String> imageLocation = Launcher.getInstance().getRemotePacks().getPackByName(path)
-                    .map(ModpackManifestList.ModpackManifestReference::getLocation)
-                    .map(location -> location.substring(0, location.lastIndexOf('.')) + ".png");
-
-            if (!imageLocation.isPresent()) {
+            Optional<ModpackManifestList.ModpackManifestReference> manifestReference = Launcher.getInstance().getRemotePacks().getPackByName(path);
+            if (!manifestReference.isPresent()) {
                 dataSetter.accept(new byte[0]);
                 return;
             }
 
-            File cacheFile = new File(Launcher.getInstance().getSaveSubDirectory("cache"), imageLocation.get());
-            if (!cacheFile.isFile() || (System.currentTimeMillis() - cacheFile.lastModified()) >= TimeUnit.DAYS.toMillis(3)) {
-                HttpRequest.get("https://launcher.myftb.de/images/" + imageLocation.get())
-                        .execute()
-                        .saveContent(cacheFile);
-            }
+            ModpackManifest modpackManifest = ManifestHelper.getManifestByReference(manifestReference.get());
+
+            String imageLocation = manifestReference.get().getLocation();
+            imageLocation = imageLocation.substring(0, imageLocation.lastIndexOf('.')) + ".png";
+
+            File cacheFile = new File(Launcher.getInstance().getSaveSubDirectory("cache"), imageLocation);
+            modpackManifest.saveModpackLogo(cacheFile);
 
             if (cacheFile.isFile()) {
                 dataSetter.accept(Files.readAllBytes(cacheFile.toPath()));
