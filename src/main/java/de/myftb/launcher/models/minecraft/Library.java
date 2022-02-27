@@ -112,10 +112,10 @@ public class Library {
 
         } else if (this.url != null) {
             downloads.add(new MavenDownloadCallable(this.url, this.name, new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
-                    this.getPath(null))));
+                    this.getPath())));
         } else {
             downloads.add(new MavenDownloadCallable(this.name, new File(Launcher.getInstance().getSaveSubDirectory("libraries"),
-                    this.getPath(null))));
+                    this.getPath())));
         }
 
         return downloads;
@@ -123,6 +123,10 @@ public class Library {
 
     public String getPath(String classifier) {
         return new MavenHelper.MavenArtifact(this.name).getFilePath(classifier);
+    }
+
+    public String getPath() {
+        return new MavenHelper.MavenArtifact(this.name).getFilePath();
     }
 
     public boolean isExtractionAllowed(String name) {

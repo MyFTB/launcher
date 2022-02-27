@@ -342,7 +342,7 @@ public class LaunchMinecraft {
 
         File librariesDir = Launcher.getInstance().getSaveSubDirectory("libraries");
         List<String> classpath = libraries.stream()
-                .map(library -> new File(librariesDir, library.getPath(null)))
+                .map(library -> new File(librariesDir, library.getPath()))
                 .map(File::getAbsolutePath)
                 .collect(Collectors.toList());
         classpath.add(new File(Launcher.getInstance().getSaveSubDirectory("versions"),
