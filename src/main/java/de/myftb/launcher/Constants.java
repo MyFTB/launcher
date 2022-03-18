@@ -18,9 +18,9 @@
 package de.myftb.launcher;
 
 public class Constants {
-    public static final String launcherObjects = "http://packs.myftb.de/packs/objects/%s";
-    public static final String packList = "http://packs.myftb.de/packs/packages.php?key=%s";
-    public static final String packManifest = "http://packs.myftb.de/packs/%s";
+    public static final String launcherObjects = "https://packs.myftb.de/packs/objects/%s";
+    public static final String packList = "https://packs.myftb.de/packs/packages.php?key=%s";
+    public static final String packManifest = "https://packs.myftb.de/packs/%s";
     public static final String runtimeIndex = "https://launcher.myftb.de/%s.json";
 
     public static final String versionManifestListUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
