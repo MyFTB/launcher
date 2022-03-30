@@ -116,6 +116,19 @@ public class Launcher {
         this.cefClient.addMessageRouter(ipcRouter);
         this.ipcTopics = new IpcTopics(this, this.ipcHandler);
         this.setupIpcCommunication();
+
+        try {
+            if (!"Oracle Corporation".equals(System.getProperty("java.vendor"))) {
+                File runtimeDir = new File(System.getProperty("java.home"));
+                File fontFile = new File(runtimeDir, "lib/fonts/LucidaSansRegular.ttf");
+                if (fontFile.isFile()) {
+                    Launcher.log.info("Oracle-JRE Font-Datei gefunden, obwohl Java-Vendor nicht auf Oracle gesetzt ist, lösche Datei");
+                    fontFile.delete();
+                }
+            }
+        } catch (Exception e) {
+            Launcher.log.warn("Fehler bei der Bereinigung von Oracle-JRE Font-Datei", e);
+        }
     }
 
     private void init() {
