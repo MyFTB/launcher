@@ -31,11 +31,12 @@ def downloadIndex(String indexName, File baseDir) {
     for (int i = 0; i < objects.size(); i++) {
         JsonObject object = objects.get(i).asJsonObject
         String path = object.get("path").asString
-        String hash = object.get("hash").asString
+        String url = object.get("url").asString
         File target = new File(baseDir, path)
         target.getParentFile().mkdirs()
         if (!target.isFile()) { //TODO Verify Signature
-            Request.Get("https://launcher.myftb.de/objects/${hash.substring(0, 2)}/$hash")
+            println "Downloading $path ($url)"
+            Request.Get(url)
                     .connectTimeout(5000)
                     .socketTimeout(30000)
                     .execute()
