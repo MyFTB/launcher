@@ -93,11 +93,10 @@ public class MicrosoftLogin implements LoginService {
             XboxAuthentication xstsAuthentication = doXstsAuthenticate(xblAuthentication);
             MinecraftAuthentication minecraftAuthentication = doMinecraftXboxAuthenticate(xstsAuthentication);
 
-            if (!checkGameOwnership(minecraftAuthentication)) {
+            MinecraftProfile minecraftProfile = getMinecraftProfile(minecraftAuthentication);
+            if (minecraftProfile.getId().isEmpty() || minecraftProfile.getName().isEmpty()) {
                 throw new LoginException("Dieser Microsoft-Account besitzt kein gültiges Minecraft-Profil");
             }
-
-            MinecraftProfile minecraftProfile = getMinecraftProfile(minecraftAuthentication);
 
             LauncherProfile launcherProfile = new LauncherProfile();
             launcherProfile.setProvider(MicrosoftLogin.MICROSOFT_PROFILE_PROVIDER);
@@ -247,23 +246,6 @@ public class MicrosoftLogin implements LoginService {
 
         try (InputStreamReader inputStreamReader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8)) {
             return MicrosoftLogin.mapper.readValue(inputStreamReader, MinecraftAuthentication.class);
-        }
-    }
-
-    private static boolean checkGameOwnership(MinecraftAuthentication minecraftAuthentication) throws IOException, LoginException {
-        HttpResponse response = HttpRequest.get("https://api.minecraftservices.com/entitlements/mcstore")
-                .addHeader("Authorization", "Bearer " + minecraftAuthentication.getAccessToken())
-                .execute()
-                .returnResponse();
-
-        if (response.getStatusLine().getStatusCode() != 200) {
-            throw new LoginException("Fehler bei der Überprüfung des Minecraft-Accounts auf Gültigkeit",
-                    new IllegalStateException("Ungültiger Statuscode: " + response.getStatusLine().getStatusCode()));
-        }
-
-        try (InputStreamReader inputStreamReader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8)) {
-            JsonObject responseJson = MicrosoftLogin.gson.fromJson(inputStreamReader, JsonElement.class).getAsJsonObject();
-            return responseJson.has("items") && !responseJson.get("items").getAsJsonArray().isEmpty();
         }
     }
 
