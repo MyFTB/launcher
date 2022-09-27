@@ -55,6 +55,14 @@ public class Library {
         return this.name.split("[:]")[2];
     }
 
+    public String getArtifactClassifier() {
+        String[] split = this.name.split("[:]");
+        if (split.length > 3) {
+            return split[3];
+        }
+        return "";
+    }
+
     public void setDownloads(Downloads downloads) {
         this.downloads = downloads;
     }

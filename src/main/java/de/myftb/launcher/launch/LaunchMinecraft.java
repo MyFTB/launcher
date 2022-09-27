@@ -50,6 +50,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -57,7 +58,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +89,8 @@ public class LaunchMinecraft {
                 .forEach(library -> {
                     Optional<Library> sameLib = joinedLibs.stream()
                             .filter(lib -> lib.getArtifactGroup().equals(library.getArtifactGroup())
-                                    && lib.getArtifactName().equals(library.getArtifactName())).findFirst();
+                                    && lib.getArtifactName().equals(library.getArtifactName())
+                                    && lib.getArtifactClassifier().equals(library.getArtifactClassifier())).findFirst();
 
                     if (sameLib.isPresent()) {
                         if (sameLib.get().getArtifactVersion().equals(library.getArtifactVersion())) {
@@ -274,43 +278,59 @@ public class LaunchMinecraft {
 
         List<Library> libraries = LaunchMinecraft.getAllLibraries(modpackManifest, minecraftManifest);
 
-        libraries.stream()
+        Stream<Pair<Library, File>> nativesWithClassifiers = libraries.stream()
                 .filter(library -> library.getNatives() != null)
-                .forEach(library -> {
+                .map(library -> {
                     if (library.getNatives().containsKey(Platform.getPlatform().name().toLowerCase())) {
                         String classifier = library.getNatives().get(Platform.getPlatform().name().toLowerCase())
                                 .replace("${arch}", System.getProperty("os.arch").contains("64") ? "64" : "32");
                         if (library.getDownloads().getClassifiers() == null || !library.getDownloads().getClassifiers().containsKey(classifier)) {
-                            return;
+                            return null;
                         }
                         File nativeFile = new File(Launcher.getInstance().getSaveSubDirectory("libraries"), library.getPath(classifier));
+                        return Pair.of(library, nativeFile);
+                    }
 
-                        try {
-                            JarFile jarFile = new JarFile(nativeFile);
-                            Enumeration<JarEntry> entries = jarFile.entries();
-                            while (entries.hasMoreElements()) {
-                                JarEntry entry = entries.nextElement();
-                                if (entry.getName().endsWith("/") || !library.isExtractionAllowed(entry.getName())) {
-                                    continue;
-                                }
+                    return null;
+                })
+                .filter(Objects::nonNull);
 
-                                File targetFile = new File(nativesDir, entry.getName());
-                                targetFile.getParentFile().mkdirs();
-                                try (FileOutputStream fileOutputStream = new FileOutputStream(targetFile)) {
-                                    try (InputStream inputStream = jarFile.getInputStream(entry)) {
-                                        byte[] buffer = new byte[4096];
-                                        int count;
-                                        while ((count = inputStream.read(buffer)) > 0) {
-                                            fileOutputStream.write(buffer, 0, count);
+        Stream<Pair<Library, File>> nativesWithoutClassifiers = libraries.stream()
+                .filter(library -> library.getName().contains("natives"))
+                .map(library -> {
+                    return Pair.of(library, new File(Launcher.getInstance().getSaveSubDirectory("libraries"), library.getPath()));
+                });
+
+        Stream.concat(nativesWithClassifiers, nativesWithoutClassifiers)
+                        .forEach(nativePair -> {
+                            File nativeFile = nativePair.getRight();
+                            Library library = nativePair.getLeft();
+
+                            try {
+                                JarFile jarFile = new JarFile(nativeFile);
+                                Enumeration<JarEntry> entries = jarFile.entries();
+                                while (entries.hasMoreElements()) {
+                                    JarEntry entry = entries.nextElement();
+                                    if (entry.getName().endsWith("/") || !library.isExtractionAllowed(entry.getName())) {
+                                        continue;
+                                    }
+
+                                    File targetFile = new File(nativesDir, entry.getName());
+                                    targetFile.getParentFile().mkdirs();
+                                    try (FileOutputStream fileOutputStream = new FileOutputStream(targetFile)) {
+                                        try (InputStream inputStream = jarFile.getInputStream(entry)) {
+                                            byte[] buffer = new byte[4096];
+                                            int count;
+                                            while ((count = inputStream.read(buffer)) > 0) {
+                                                fileOutputStream.write(buffer, 0, count);
+                                            }
                                         }
                                     }
                                 }
+                            } catch (IOException e) {
+                                LaunchMinecraft.log.error("Fehler beim Entpacken von Natives", e);
                             }
-                        } catch (IOException e) {
-                            LaunchMinecraft.log.error("Fehler beim Entpacken von Natives", e);
-                        }
-                    }
-                });
+                        });
 
         Arguments baseArgs = modpackManifest.getVersionManifest().getInheritsFrom() != null ? minecraftManifest.getArguments() : null;
         List<String> gameArguments = Arguments.getFromArguments(baseArgs,
@@ -371,6 +391,8 @@ public class LaunchMinecraft {
         tokens.put("launcher_name", "MyFTBLauncher");
         tokens.put("launcher_version", Launcher.getVersion());
         tokens.put("classpath", String.join(File.pathSeparator, classpath));
+        tokens.put("library_directory", librariesDir.getCanonicalFile().getAbsolutePath());
+        tokens.put("classpath_separator", File.pathSeparator);
 
         tokens.put("min_memory", String.valueOf(Launcher.getInstance().getConfig().getMinMemory()));
         tokens.put("max_memory", String.valueOf(Launcher.getInstance().getConfig().getMaxMemory()));
