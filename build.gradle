@@ -27,7 +27,7 @@ repositories {
 }
 
 dependencies {
-	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+	compile group: 'org.slf4j', name: 'slf4j-api', version: '2.0.3'
 	compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
 
 	compile group: 'com.mojang', name: 'authlib', version: '1.5.22'
