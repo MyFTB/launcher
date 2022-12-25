@@ -159,7 +159,8 @@ public class LaunchMinecraft {
 
         int majorGameVersion = Integer.parseInt(modpackManifest.getGameVersion().split("[.]")[1]);
         Optional<Library> neededForgeInstaller = majorGameVersion > 12 ? libraries.stream()
-                .filter(library -> library.getArtifactGroup().equals("net.minecraftforge") && library.getArtifactName().equals("forge"))
+                .filter(library -> library.getArtifactGroup().equals("net.minecraftforge")
+                        && (library.getArtifactName().equals("forge") || library.getArtifactName().equals("fmlloader")))
                 .findFirst() : Optional.empty();
 
         if (neededForgeInstaller.isPresent()) {

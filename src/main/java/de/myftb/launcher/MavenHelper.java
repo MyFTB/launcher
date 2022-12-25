@@ -44,6 +44,22 @@ public class MavenHelper {
             }
         }
 
+        public String getGroupId() {
+            return this.groupId;
+        }
+
+        public String getArtifactId() {
+            return this.artifactId;
+        }
+
+        public String getVersion() {
+            return this.version;
+        }
+
+        public String getClassifier() {
+            return this.classifier;
+        }
+
         public String getFilePath(String classifier) {
             return String.format("%s/%s/%s/%s-%s%s.jar",
                     this.groupId,

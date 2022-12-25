@@ -36,8 +36,11 @@ public class ForgeInstallWrapper extends MavenDownloadCallable {
     }
 
     public static ForgeInstallWrapper of(MavenHelper.MavenArtifact forgeArtifact) {
-        return new ForgeInstallWrapper(forgeArtifact.getArtifactPath("installer"),
-                new File(Launcher.getInstance().getSaveSubDirectory("libraries"), forgeArtifact.getFilePath("installer")));
+        MavenHelper.MavenArtifact installerArtifact = new MavenHelper.MavenArtifact("net.minecraftforge", "forge",
+                forgeArtifact.getVersion(), "installer");
+
+        return new ForgeInstallWrapper(installerArtifact.getArtifactPath(),
+                new File(Launcher.getInstance().getSaveSubDirectory("libraries"), installerArtifact.getFilePath()));
     }
 
     @Override
