@@ -107,7 +107,7 @@ public class MicrosoftLogin implements LoginService {
             launcherProfile.getProperties().put("oauthRefreshToken", oauthResponse.getRefreshToken());
             return launcherProfile;
         } catch (IOException e) {
-            throw new LoginException("Die Micrsoft-Anmeldung war nicht erfolgreich", e);
+            throw new LoginException("Die Microsoft-Anmeldung war nicht erfolgreich", e);
         }
     }
 
@@ -150,6 +150,11 @@ public class MicrosoftLogin implements LoginService {
         }
     }
 
+    private static IllegalStateException getInvalidStatusException(HttpResponse response) throws IOException {
+        return new IllegalStateException(String.format("Ungültiger Statuscode %d: %s", response.getStatusLine().getStatusCode(),
+                EntityUtils.toString(response.getEntity())));
+    }
+
     private static OauthResponse getAccessToken(String code, boolean refresh) throws IOException, LoginException {
         HttpResponse response = HttpRequest.post("https://login.live.com/oauth20_token.srf")
                 .bodyForm(new BasicNameValuePair("client_id", Constants.microsoftLoginClientId),
@@ -161,10 +166,7 @@ public class MicrosoftLogin implements LoginService {
                 .returnResponse();
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            System.out.println(EntityUtils.toString(response.getEntity()));
-
-            throw new LoginException("Fehler bei der Abfrage des Microsoft Zugriffstoken",
-                    new IllegalStateException("Ungültiger Statuscode: " + response.getStatusLine().getStatusCode()));
+            throw new LoginException("Fehler bei der Abfrage des Microsoft Zugriffstoken", MicrosoftLogin.getInvalidStatusException(response));
         }
 
         try (InputStreamReader inputStreamReader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8)) {
@@ -190,8 +192,7 @@ public class MicrosoftLogin implements LoginService {
                 .returnResponse();
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            throw new LoginException("Fehler bei der XboxLive Authentifizierung",
-                    new IllegalStateException("Ungültiger Statuscode: " + response.getStatusLine().getStatusCode()));
+            throw new LoginException("Fehler bei der XboxLive Authentifizierung", MicrosoftLogin.getInvalidStatusException(response));
         }
 
         try (InputStreamReader inputStreamReader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8)) {
@@ -220,8 +221,7 @@ public class MicrosoftLogin implements LoginService {
                 .returnResponse();
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            throw new LoginException("Fehler bei der XSTS Authentifizierung",
-                    new IllegalStateException("Ungültiger Statuscode: " + response.getStatusLine().getStatusCode()));
+            throw new LoginException("Fehler bei der XSTS Authentifizierung", MicrosoftLogin.getInvalidStatusException(response));
         }
 
         try (InputStreamReader inputStreamReader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8)) {
@@ -240,8 +240,7 @@ public class MicrosoftLogin implements LoginService {
                 .returnResponse();
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            throw new LoginException("Fehler bei der Minecraft-Xbox Authentifizierung",
-                    new IllegalStateException("Ungültiger Statuscode: " + response.getStatusLine().getStatusCode()));
+            throw new LoginException("Fehler bei der Minecraft-Xbox Authentifizierung", MicrosoftLogin.getInvalidStatusException(response));
         }
 
         try (InputStreamReader inputStreamReader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8)) {
@@ -256,8 +255,7 @@ public class MicrosoftLogin implements LoginService {
                 .returnResponse();
 
         if (response.getStatusLine().getStatusCode() != 200) {
-            throw new LoginException("Fehler bei der Abfrage des Minecraft-Profils",
-                    new IllegalStateException("Ungültiger Statuscode: " + response.getStatusLine().getStatusCode()));
+            throw new LoginException("Fehler bei der Abfrage des Minecraft-Profils", MicrosoftLogin.getInvalidStatusException(response));
         }
 
         try (InputStreamReader inputStreamReader = new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8)) {
