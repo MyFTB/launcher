@@ -42,29 +42,32 @@ public class DownloadCallable implements Callable<File> {
 
     @Override
     public File call() throws Exception {
-        if (this.downloadable.targetFile.isFile()
-                && (this.onlyCheckExistance || this.downloadable.hashFn.getFileHash(this.downloadable.targetFile).equals(this.downloadable.hash))) {
-            DownloadCallable.log.trace("Überspringe Download von " + this.downloadable.url + ", Datei ist bereits aktuell");
+        try {
+            if (this.downloadable.targetFile.isFile()
+                    && (this.onlyCheckExistance || this.downloadable.hashFn.getFileHash(this.downloadable.targetFile).equals(this.downloadable.hash))) {
+                DownloadCallable.log.trace("Überspringe Download von " + this.downloadable.url + ", Datei ist bereits aktuell");
+                return this.downloadable.targetFile;
+            }
+
+            DownloadCallable.log.trace("Lade Datei " + this.downloadable.url + " herunter");
+
+            this.downloadable.targetFile.getParentFile().mkdirs();
+
+            HttpRequest.get(this.downloadable.url)
+                    .execute()
+                    .saveContent(this.downloadable.targetFile);
+
+            String hash = this.downloadable.hashFn.getFileHash(this.downloadable.targetFile);
+            if (!this.onlyCheckExistance && !hash.equals(this.downloadable.hash)) {
+                throw new IOException("Ungültige Prüfsumme: " + hash + " erwartet: " + this.downloadable.hash);
+            }
+
+            DownloadCallable.log.info("Datei " + this.downloadable.url + " nach " + this.downloadable.targetFile.getAbsolutePath() + " heruntergeladen");
+
             return this.downloadable.targetFile;
+        } catch (Exception e) {
+            throw new IOException("Fehler beim Herunterladen von " + this.downloadable.url + " nach " + this.downloadable.targetFile, e);
         }
-
-        DownloadCallable.log.trace("Lade Datei " + this.downloadable.url + " herunter");
-
-        this.downloadable.targetFile.getParentFile().mkdirs();
-
-        HttpRequest.get(this.downloadable.url)
-                .execute()
-                .saveContent(this.downloadable.targetFile);
-
-        String hash = this.downloadable.hashFn.getFileHash(this.downloadable.targetFile);
-        if (!this.onlyCheckExistance && !hash.equals(this.downloadable.hash)) {
-            throw new IOException("Ungültige Prüfsumme beim Download von " + this.downloadable.url + ": " + hash + " erwartet: "
-                    + this.downloadable.hash);
-        }
-
-        DownloadCallable.log.info("Datei " + this.downloadable.url + " nach " + this.downloadable.targetFile.getAbsolutePath() + " heruntergeladen");
-
-        return this.downloadable.targetFile;
     }
 
     public static class Downloadable {
