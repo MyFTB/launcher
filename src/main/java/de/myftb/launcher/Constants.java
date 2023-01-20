@@ -24,7 +24,7 @@ public class Constants {
     public static final String runtimeIndex = "https://launcher.myftb.de/%s.json";
 
     public static final String versionManifestListUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
-    public static final String minecraftResources = "http://resources.download.minecraft.net/%s";
+    public static final String minecraftResources = "https://resources.download.minecraft.net/%s";
 
     public static final String pasteTarget = "https://paste.myftb.de";
     public static final String postsApi = "https://myftb.de/api/posts";
