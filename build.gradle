@@ -40,8 +40,8 @@ dependencies {
 	compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version: '5.0.4'
 	compile group: 'com.github.vatbub', name: 'mslinks', version: '1.0.5'
 	compile group: 'org.jclarion', name: 'image4j', version: '0.7'
-	compile group: 'io.sentry', name: 'sentry', version: '5.6.0'
-	compile group: 'io.sentry', name: 'sentry-logback', version: '5.6.0'
+	compile group: 'io.sentry', name: 'sentry', version: '6.15.0'
+	compile group: 'io.sentry', name: 'sentry-logback', version: '6.15.0'
 	compile group: 'org.nanohttpd', name: 'nanohttpd', version: '2.3.1'
 
 	compile files(os.contains("mac") ? 'run/jcef/jcef_app.app/Contents/Java/jcef.jar' : 'run/jcef/jcef.jar')
