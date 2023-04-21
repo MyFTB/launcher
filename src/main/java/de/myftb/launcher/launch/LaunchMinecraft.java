@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -404,7 +405,12 @@ public class LaunchMinecraft {
             runtimeDir = new File(new File(Launcher.getInstance().getExecutableDirectory(), "custom-runtimes"), modpackManifest.getRuntime());
         }
 
-        arguments.add(new File(runtimeDir, "bin/java" + (Platform.getPlatform() == Platform.WINDOWS ? ".exe" : "")).getAbsolutePath());
+        File runtimeBinary = new File(runtimeDir, "bin/java" + (Platform.getPlatform() == Platform.WINDOWS ? ".exe" : ""));
+        if (Platform.getPlatform() == Platform.LINUX) {
+            Files.setPosixFilePermissions(runtimeBinary.toPath(), PosixFilePermissions.fromString("rwxr-xr-x"));
+        }
+
+        arguments.add(runtimeBinary.getAbsolutePath());
         arguments.addAll(jvmArguments);
         arguments.add(modpackManifest.getVersionManifest().getMainClass());
         arguments.addAll(gameArguments);
