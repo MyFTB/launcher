@@ -73,8 +73,13 @@ public class ForgeInstallWrapper extends MavenDownloadCallable {
             runMethod = classClientInstall.getDeclaredMethod("run", File.class, Predicate.class);
             success = (boolean) runMethod.invoke(clientInstall, targetDir, optionals);
         } catch (NoSuchMethodException e) {
-            runMethod = classClientInstall.getDeclaredMethod("run", File.class, Predicate.class, File.class);
-            success = (boolean) runMethod.invoke(clientInstall, targetDir, optionals, installerFile);
+            try {
+                runMethod = classClientInstall.getDeclaredMethod("run", File.class, Predicate.class, File.class);
+                success = (boolean) runMethod.invoke(clientInstall, targetDir, optionals, installerFile);
+            } catch (NoSuchMethodException e1) {
+                runMethod = classClientInstall.getDeclaredMethod("run", File.class, File.class);
+                success = (boolean) runMethod.invoke(clientInstall, targetDir, installerFile);
+            }
         }
 
         if (!success) {
