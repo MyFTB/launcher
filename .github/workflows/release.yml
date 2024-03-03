@@ -22,6 +22,6 @@ jobs:
       - name: Compress macOS App
         run: tar -cjf build/libs/MyFTBLauncher.app.tar.bz2 -C build/libs MyFTBLauncher.app
       - name: Upload Release Assets
-        run: hub release edit -a build/libs/MyFTBLauncher.app.tar.bz2 $(find build/libs/ -maxdepth 1 -type f -name "*.jar" -printf "-a %p ") -m "" ${GITHUB_REF#refs/tags/}
+        run: gh release upload $GITHUB_REF build/libs/MyFTBLauncher.app.tar.bz2 $(find build/libs/ -maxdepth 1 -type f -name "*.jar" -printf "%p ")
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
